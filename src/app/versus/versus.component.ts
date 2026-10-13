@@ -1,10 +1,11 @@
 import { Component, OnDestroy } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { API_URL } from '../api.config';
 import { typeFr } from '../commun/pokemon-types';
 import { NomPokemonPipe } from '../commun/nom-pokemon.pipe';
+import { CombatCaptureService } from '../service/capture/combat-capture.service';
 
 type Phase = 'repos' | 'intro' | 'envoi' | 'stats' | 'attaques' | 'bonus' | 'ko' | 'fin';
 type Cote = 'A' | 'B';
@@ -35,6 +36,7 @@ export class VersusComponent implements OnDestroy {
 
   // Mode « boss de la semaine » (route /boss)
   modeBoss = false;
+  modeCapture = false;   // combat contre un Pokémon sauvage (route /capture/combat)
   boss: any = null;
 
   // Mise en scène
@@ -54,10 +56,27 @@ export class VersusComponent implements OnDestroy {
   readonly mouvementReduit = typeof matchMedia !== 'undefined'
     && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  constructor(private http: HttpClient, private route: ActivatedRoute) {}
+  constructor(private http: HttpClient, private route: ActivatedRoute, private router: Router,
+              private combatCapture: CombatCaptureService) {}
 
   ngOnInit() {
     this.modeBoss = !!this.route.snapshot.data['boss'];
+    this.modeCapture = !!this.route.snapshot.data['capture'];
+    if (this.modeCapture) {
+      // Le combat a déjà été calculé par Équipes : on ne fait que le mettre en scène
+      const r = this.combatCapture.dernier?.combat;
+      if (!r) {
+        this.router.navigate(['/capture']);
+        return;
+      }
+      this.combatCapture.dernier = null;
+      r.teams.B.nom = `${this.noms.transform(r.teams.B.nom)} sauvage`;
+      r.teamB.name = r.teams.B.nom;
+      r.teamA.name = r.teams.A.nom;
+      this.resultat = r;
+      this.mouvementReduit ? this.passer() : this.jouer();
+      return;
+    }
     if (this.modeBoss) {
       forkJoin({
         miennes: this.http.get<any[]>(`${API_URL}/teams`),
@@ -145,7 +164,9 @@ export class VersusComponent implements OnDestroy {
     this.phase = 'envoi';
     this.ecrire(B.boss
       ? `Un ${B.nom} gigantesque apparaît ! ${A.nom} envoie ses Pokémon !`
-      : `${A.nom} et ${B.nom} envoient leurs Pokémon !`);
+      : B.sauvage
+        ? `Un ${B.nom} apparaît ! ${A.nom}, à toi de jouer !`
+        : `${A.nom} et ${B.nom} envoient leurs Pokémon !`);
     const total = Math.max(A.members.length, B.members.length);
     for (let i = 1; i <= total; i++) {
       this.envoyes = i;
@@ -219,7 +240,14 @@ export class VersusComponent implements OnDestroy {
   private terminer() {
     const r = this.resultat;
     this.phase = 'ko';
-    if (r.teams.B.boss && r.winner !== 'draw') {
+    if (r.teams.B.sauvage) {
+      if (r.winner === 'A') {
+        this.ecrire(`${r.teams.B.nom} est K.O. ! Victoire, la run continue !`);
+        this.lancerConfettis(r.teams.A);
+      } else {
+        this.ecrire(`Ton équipe est K.O.… La run s'arrête ici.`);
+      }
+    } else if (r.teams.B.boss && r.winner !== 'draw') {
       if (r.winner === 'A') {
         this.ecrire(`${r.teams.B.nom} est vaincu ! Bravo ${r.teams.A.nom} !`);
         this.lancerConfettis(r.teams.A);
@@ -313,6 +341,7 @@ export class VersusComponent implements OnDestroy {
     const r = this.resultat;
     if (r.winner === 'draw') return 'ÉGALITÉ !';
     if (r.teams.B.boss) return r.winner === 'A' ? 'BOSS VAINCU !' : 'DÉFAITE…';
+    if (r.teams.B.sauvage) return r.winner === 'A' ? 'VICTOIRE !' : 'DÉFAITE…';
     return 'VICTOIRE !';
   }
 
@@ -320,6 +349,10 @@ export class VersusComponent implements OnDestroy {
   get joursRestants(): number {
     if (!this.boss) return 0;
     return Math.max(1, Math.ceil((new Date(this.boss.endsAt).getTime() - Date.now()) / 86400000));
+  }
+
+  retourCapture() {
+    this.router.navigate(['/capture']);
   }
 
   couleurPv(pv: number): string {

@@ -1,7 +1,7 @@
 <div class="m-5 p-3 border rounded bg-light">
   <div class="d-flex justify-content-between align-items-center m-3">
-    <h2 class="mb-0">{{ modeBoss ? 'Boss de la semaine' : 'Affrontement' }}</h2>
-    <button class="btn btn-primary" [routerLink]="['/liste-equipes']">Retour</button>
+    <h2 class="mb-0">{{ modeCapture ? 'Combat sauvage' : modeBoss ? 'Boss de la semaine' : 'Affrontement' }}</h2>
+    <button class="btn btn-primary" [routerLink]="[modeCapture ? '/capture' : '/liste-equipes']">Retour</button>
   </div>
 
   <p *ngIf="mesEquipes.length === 0" class="text-center text-muted">
@@ -42,7 +42,7 @@
   </div>
 
   <!-- Choix des deux équipes -->
-  <div *ngIf="!modeBoss && mesEquipes.length > 0" class="d-flex flex-wrap justify-content-center align-items-end gap-3 mb-4">
+  <div *ngIf="!modeBoss && !modeCapture && mesEquipes.length > 0" class="d-flex flex-wrap justify-content-center align-items-end gap-3 mb-4">
     <div style="min-width: 240px;">
       <label for="equipeA" class="form-label">Ton équipe</label>
       <select id="equipeA" class="form-select form-select-lg" [(ngModel)]="idA" name="idA" [disabled]="enCours">
@@ -75,7 +75,7 @@
     <div *ngIf="phase === 'intro'" class="intro">
       <div class="intro-moitie intro-a"><span>{{ resultat.teams.A.nom }}</span></div>
       <div class="intro-moitie intro-b" [class.intro-boss]="resultat.teams.B.boss">
-        <span>{{ resultat.teams.B.boss ? 'BOSS' : resultat.teams.B.nom }}</span>
+        <span>{{ resultat.teams.B.boss ? 'BOSS' : resultat.teams.B.sauvage ? 'SAUVAGE' : resultat.teams.B.nom }}</span>
       </div>
       <div class="intro-vs">VS</div>
     </div>
@@ -155,6 +155,9 @@
   </div>
 
   <div *ngIf="phase === 'fin'" class="text-center mt-3">
+    <button *ngIf="modeCapture" class="btn btn-success btn-lg me-2" (click)="retourCapture()">
+      {{ resultat.winner === 'A' ? 'Continuer la run ▶' : 'Retour au mode Capture' }}
+    </button>
     <button class="btn btn-outline-primary" (click)="jouer()">Rejouer l'animation</button>
   </div>
 

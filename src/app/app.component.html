@@ -12,13 +12,15 @@
 
       <!-- Afficher l'avatar quand isConnecter est true -->
       <div *ngIf="isConnecter" class="d-flex align-items-center">
-        <a routerLink="/versus" class="btn btn-outline-primary me-2">Versus</a>
-        <a routerLink="/boss" class="btn btn-warning fw-bold me-3">Boss</a>
+        <!-- btn-sm : la barre accueille maintenant 3 modes de jeu sans chevaucher le titre centré -->
+        <a routerLink="/capture" class="btn btn-sm btn-success fw-bold me-1">Capture</a>
+        <a routerLink="/versus" class="btn btn-sm btn-outline-primary me-1">Versus</a>
+        <a routerLink="/boss" class="btn btn-sm btn-warning fw-bold me-3">Boss</a>
         <a [routerLink]="'/profil'" class="d-flex align-items-center">
           <img [src]="photoProfil" alt="Profil" class="rounded-circle"
             style="width: 40px; height: 40px; object-fit: cover;">
         </a>
-        <button type="button" class="btn btn-danger ms-2" (click)="logout()">Se déconnecter</button>
+        <button type="button" class="btn btn-sm btn-danger ms-2" (click)="logout()">Se déconnecter</button>
       </div>
     </div>
   </div>

@@ -13,6 +13,7 @@ import { ProfilComponent } from './profil/profil.component';
 import { AuthInterceptor } from './service/auth/auth.interceptor';
 import { VersusComponent } from './versus/versus.component';
 import { NomPokemonPipe } from './commun/nom-pokemon.pipe';
+import { CaptureComponent } from './capture/capture.component';
 
 @NgModule({
   declarations: [
@@ -25,6 +26,7 @@ import { NomPokemonPipe } from './commun/nom-pokemon.pipe';
     ProfilComponent,
     VersusComponent,
     NomPokemonPipe,
+    CaptureComponent,
   ],
   imports: [
     BrowserModule,
