@@ -1,4 +1,4 @@
-<div class="m-5 p-3 border rounded bg-light">
+<div class="m-5 p-3 border rounded bg-light" *ngIf="pokemon; else chargement">
     <div class="d-flex justify-content-end m-3">
         <button class="btn btn-primary" [routerLink]="['/equipe-creation']">
           Retour
@@ -90,3 +90,8 @@
 </div>
 
 </div>
+
+<!-- Affiché le temps que PokéAPI réponde (évitait une erreur sur pokemon.name) -->
+<ng-template #chargement>
+    <p class="m-5 text-center text-muted">Chargement...</p>
+</ng-template>

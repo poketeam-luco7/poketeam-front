@@ -1,10 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { Observable, Subject, of, debounceTime, switchMap, catchError } from 'rxjs';
 import { API_URL } from '../api.config';
 import { PokemonResume, PokemonService } from '../service/pokemon/pokemon.service';
 import { TYPES, typeFr } from '../commun/pokemon-types';
+import { BrouillonEquipeService } from '../service/equipe/brouillon-equipe.service';
 
 type Source = { kind: 'generation'; num: number } | { kind: 'mega' } | { kind: 'type'; type: string };
 
@@ -14,7 +15,7 @@ type Source = { kind: 'generation'; num: number } | { kind: 'mega' } | { kind: '
   templateUrl: './equipe-creat.component.html',
   styleUrl: './equipe-creat.component.css'
 })
-export class EquipeCreatComponent {
+export class EquipeCreatComponent implements OnDestroy {
   // Équipe en cours
   equipe: (PokemonResume | null)[] = [null, null, null, null, null, null];
   nomEquipe = '';
@@ -34,9 +35,18 @@ export class EquipeCreatComponent {
   analyse: any = null;
   private equipeModifiee = new Subject<void>();
 
-  constructor(private pokemonService: PokemonService, private router: Router, private http: HttpClient) {}
+  private termine = false; // équipe enregistrée ou annulée : on ne garde pas de brouillon
+
+  constructor(private pokemonService: PokemonService, private router: Router, private http: HttpClient,
+              private brouillon: BrouillonEquipeService) {}
 
   ngOnInit(): void {
+    // Reprise de l'équipe en cours (retour depuis la fiche détail d'un Pokémon par exemple)
+    this.equipe = [...this.brouillon.equipe];
+    this.nomEquipe = this.brouillon.nom;
+    this.estPublique = this.brouillon.publique;
+    this.source = this.brouillon.source;
+    this.searchText = this.brouillon.recherche;
     this.charger();
     // Une analyse par modification, en ignorant les réponses devenues obsolètes
     this.equipeModifiee.pipe(
@@ -48,6 +58,18 @@ export class EquipeCreatComponent {
           : of(null);
       })
     ).subscribe(a => (this.analyse = a));
+    if (this.equipe.some(m => m)) {
+      this.equipeModifiee.next();
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (this.termine) return;
+    this.brouillon.equipe = [...this.equipe];
+    this.brouillon.nom = this.nomEquipe;
+    this.brouillon.publique = this.estPublique;
+    this.brouillon.source = this.source;
+    this.brouillon.recherche = this.searchText;
   }
 
   // --- Filtres ---
@@ -165,7 +187,10 @@ export class EquipeCreatComponent {
 
     this.enregistrement = true;
     this.http.post(`${API_URL}/teams`, data).subscribe({
-      next: () => this.router.navigate(['/liste-equipes']),
+      next: () => {
+        this.terminer();
+        this.router.navigate(['/liste-equipes']);
+      },
       error: (err) => {
         this.enregistrement = false;
         alert(err.error?.error || "Erreur lors de l'enregistrement de l'équipe.");
@@ -174,7 +199,13 @@ export class EquipeCreatComponent {
   }
 
   annuler(): void {
+    this.terminer();
     this.router.navigate(['/liste-equipes']);
+  }
+
+  private terminer(): void {
+    this.termine = true;
+    this.brouillon.vider();
   }
 
   viewDetails(pokemon: PokemonResume): void {
