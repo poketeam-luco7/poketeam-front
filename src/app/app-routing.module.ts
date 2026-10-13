@@ -8,6 +8,7 @@ import { ProfilComponent } from './profil/profil.component';
 import { authGuard } from './service/auth/auth.guard';
 import { VersusComponent } from './versus/versus.component';
 import { CaptureComponent } from './capture/capture.component';
+import { PokedexComponent } from './pokedex/pokedex.component';
 
 const routes: Routes = [
   {path:'',redirectTo:'accueil',pathMatch:'full'},
@@ -19,6 +20,7 @@ const routes: Routes = [
   {path:'versus', component: VersusComponent, canActivate: [authGuard]},
   {path:'boss', component: VersusComponent, canActivate: [authGuard], data: { boss: true }},
   {path:'capture', component: CaptureComponent, canActivate: [authGuard]},
+  {path:'pokedex', component: PokedexComponent, canActivate: [authGuard]},
   {path:'capture/combat', component: VersusComponent, canActivate: [authGuard], data: { capture: true }}
 ];
 

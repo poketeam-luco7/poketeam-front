@@ -14,6 +14,7 @@ import { AuthInterceptor } from './service/auth/auth.interceptor';
 import { VersusComponent } from './versus/versus.component';
 import { NomPokemonPipe } from './commun/nom-pokemon.pipe';
 import { CaptureComponent } from './capture/capture.component';
+import { PokedexComponent } from './pokedex/pokedex.component';
 
 @NgModule({
   declarations: [
@@ -27,6 +28,7 @@ import { CaptureComponent } from './capture/capture.component';
     VersusComponent,
     NomPokemonPipe,
     CaptureComponent,
+    PokedexComponent,
   ],
   imports: [
     BrowserModule,

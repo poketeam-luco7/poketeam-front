@@ -85,7 +85,7 @@ export class VersusComponent implements OnDestroy {
         next: ({ miennes, boss }) => {
           this.mesEquipes = miennes;
           this.boss = boss;
-          this.idA = this.route.snapshot.queryParamMap.get('a') || miennes[0]?.idTeam || '';
+          this.idA = this.route.snapshot.queryParamMap.get('a') || this.premiereJouable(miennes);
         },
         error: () => (this.erreur = "Le boss de la semaine n'a pas pu être chargé."),
       });
@@ -103,9 +103,14 @@ export class VersusComponent implements OnDestroy {
       this.adversaires = [...miennes.map(t => ({ ...t, label: t.nom })), ...autres];
 
       // Arrivée depuis le bouton « Combattre » d'une carte d'équipe
-      this.idA = this.route.snapshot.queryParamMap.get('a') || miennes[0]?.idTeam || '';
-      this.idB = this.adversaires.find(t => t.idTeam !== this.idA)?.idTeam || '';
+      this.idA = this.route.snapshot.queryParamMap.get('a') || this.premiereJouable(miennes);
+      this.idB = this.premiereJouable(this.adversaires.filter(t => t.idTeam !== this.idA));
     });
+  }
+
+  /** Une équipe contenant un Pokémon non capturé ne peut pas combattre. */
+  private premiereJouable(equipes: any[]): string {
+    return equipes.find(t => !t.locked?.length)?.idTeam || '';
   }
 
   ngOnDestroy() {

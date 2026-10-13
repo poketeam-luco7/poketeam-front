@@ -74,42 +74,45 @@
       </p>
     </div>
 
-    <!-- ===================== Équipe de capture ===================== -->
+    <!-- ===================== Équipe ===================== -->
+    <!-- Composée avant chaque run, figée jusqu'à la capture ou la défaite -->
     <div class="p-3 mb-4 border rounded bg-white">
-      <div class="d-flex justify-content-between align-items-center mb-3">
-        <h5 class="mb-0">Mon équipe</h5>
-        <button *ngIf="!edition" class="btn btn-outline-primary btn-sm" (click)="ouvrirEdition()" [disabled]="etat.run">
-          Modifier l'équipe
-        </button>
-      </div>
-
-      <div *ngIf="!edition" class="d-flex flex-wrap gap-3">
-        <div *ngFor="let p of equipe" class="membre text-center">
-          <img [src]="p.sprite" [alt]="p.name" class="rounded-circle border" style="width: 72px; height: 72px;">
-          <div class="small fw-bold">{{ p.name | nomPokemon }}</div>
-          <ng-container *ngIf="progression(p) as prog">
-            <div class="progress" style="height: 8px;" [title]="prog.victories + ' / ' + prog.threshold + ' victoires'">
-              <div class="progress-bar bg-success" [style.width.%]="pourcentage(prog)"></div>
-            </div>
-            <div class="tiny text-muted">{{ prog.victories }}/{{ prog.threshold }} → {{ prochain(prog) }}</div>
-          </ng-container>
+      <ng-container *ngIf="etat.run">
+        <h5 class="mb-3">Équipe de la run</h5>
+        <div class="d-flex flex-wrap gap-3">
+          <div *ngFor="let p of equipeRun" class="membre text-center">
+            <img [src]="p.sprite" [alt]="p.name" class="rounded-circle border" style="width: 72px; height: 72px;">
+            <div class="small fw-bold">{{ p.name | nomPokemon }}</div>
+            <ng-container *ngTemplateOutlet="barre; context: { $implicit: progression(p) }"></ng-container>
+          </div>
         </div>
-      </div>
+      </ng-container>
 
-      <!-- Édition : on pioche dans la collection -->
-      <ng-container *ngIf="edition">
-        <p class="small text-muted">Clique sur jusqu'à 6 Pokémon de ta collection ({{ selection.length }}/6).</p>
-        <div class="d-flex flex-wrap gap-2 mb-3">
+      <ng-container *ngIf="!etat.run">
+        <div class="d-flex justify-content-between align-items-baseline flex-wrap gap-2 mb-2">
+          <h5 class="mb-0">Équipe pour la prochaine run</h5>
+          <small class="text-muted">{{ selection.length }}/6 · choisis ensuite un palier</small>
+        </div>
+        <p class="small text-muted mb-2">Clique sur les Pokémon de ta collection. Chaque victoire compte pour l'évolution de chaque membre.</p>
+        <div class="d-flex flex-wrap gap-2">
           <div *ngFor="let p of etat.collection" class="choix-membre text-center p-1 rounded"
                [class.choisi]="selection.includes(p.id)" (click)="basculer(p.id)">
             <img [src]="p.sprite" [alt]="p.name" style="width: 56px; height: 56px;">
             <div class="tiny">{{ p.name | nomPokemon }}</div>
+            <ng-container *ngTemplateOutlet="barre; context: { $implicit: progression(p) }"></ng-container>
           </div>
         </div>
-        <button class="btn btn-primary btn-sm me-2" (click)="enregistrerEquipe()" [disabled]="selection.length === 0">Enregistrer</button>
-        <button class="btn btn-outline-secondary btn-sm" (click)="edition = false">Annuler</button>
       </ng-container>
     </div>
+
+    <ng-template #barre let-prog>
+      <ng-container *ngIf="prog">
+        <div class="progress" style="height: 8px;" [title]="prog.victories + ' / ' + prog.threshold + ' victoires'">
+          <div class="progress-bar bg-success" [style.width.%]="pourcentage(prog)"></div>
+        </div>
+        <div class="tiny text-muted">{{ prog.victories }}/{{ prog.threshold }} → {{ prochain(prog) }}</div>
+      </ng-container>
+    </ng-template>
 
     <!-- ===================== Paliers ===================== -->
     <h5>Paliers de stats de base</h5>
@@ -122,14 +125,17 @@
         <div class="tiny text-muted mb-1" title="Pokémon du palier dont tu possèdes déjà la ligne d'évolution">
           {{ t.owned }} / {{ t.count }} découverts
         </div>
-        <button class="btn btn-sm btn-outline-danger w-100" (click)="lancerRun(t.index)" [disabled]="etat.run || t.owned === t.count">
+        <button class="btn btn-sm btn-outline-danger w-100" (click)="lancerRun(t.index)" [disabled]="etat.run || !selection.length || t.owned === t.count">
           Run
         </button>
       </div>
     </div>
 
     <!-- ===================== Collection ===================== -->
-    <h5>Ma collection ({{ etat.collection.length }})</h5>
+    <div class="d-flex justify-content-between align-items-baseline">
+      <h5>Ma collection ({{ etat.collection.length }})</h5>
+      <a routerLink="/pokedex" class="small">Pokédex : {{ etat.pokedex?.captured }} / {{ etat.pokedex?.total }} →</a>
+    </div>
     <div class="d-flex flex-wrap gap-2">
       <div *ngFor="let p of etat.collection" class="text-center collection-item" [title]="p.name | nomPokemon">
         <img [src]="p.sprite" [alt]="p.name" style="width: 56px; height: 56px;">

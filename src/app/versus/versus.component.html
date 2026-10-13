@@ -30,7 +30,7 @@
           <div style="min-width: 220px;">
             <label for="equipeBoss" class="form-label small mb-1">Ton équipe</label>
             <select id="equipeBoss" class="form-select" [(ngModel)]="idA" name="idBoss" [disabled]="enCours">
-              <option *ngFor="let t of mesEquipes" [value]="t.idTeam">{{ t.nom }}</option>
+              <option *ngFor="let t of mesEquipes" [value]="t.idTeam" [disabled]="t.locked?.length">{{ t.nom }}{{ t.locked?.length ? ' 🔒' : '' }}</option>
             </select>
           </div>
           <button class="btn btn-warning btn-lg fw-bold" (click)="lancer()" [disabled]="!peutLancer()">
@@ -46,7 +46,7 @@
     <div style="min-width: 240px;">
       <label for="equipeA" class="form-label">Ton équipe</label>
       <select id="equipeA" class="form-select form-select-lg" [(ngModel)]="idA" name="idA" [disabled]="enCours">
-        <option *ngFor="let t of mesEquipes" [value]="t.idTeam">{{ t.nom }}</option>
+        <option *ngFor="let t of mesEquipes" [value]="t.idTeam" [disabled]="t.locked?.length">{{ t.nom }}{{ t.locked?.length ? ' 🔒' : '' }}</option>
       </select>
     </div>
 
@@ -55,7 +55,7 @@
     <div style="min-width: 240px;">
       <label for="equipeB" class="form-label">Adversaire</label>
       <select id="equipeB" class="form-select form-select-lg" [(ngModel)]="idB" name="idB" [disabled]="enCours">
-        <option *ngFor="let t of adversaires" [value]="t.idTeam">{{ t.label }}</option>
+        <option *ngFor="let t of adversaires" [value]="t.idTeam" [disabled]="t.locked?.length">{{ t.label }}{{ t.locked?.length ? ' 🔒' : '' }}</option>
       </select>
     </div>
 

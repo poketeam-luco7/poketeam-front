@@ -31,6 +31,9 @@ export class EquipeCreatComponent implements OnDestroy {
   searchText = '';
   chargement = false;
 
+  // Pokémon débloqués en mode Capture : seuls ceux-ci peuvent entrer dans une équipe
+  capture: { started: boolean; especes: Set<string>; megas: Set<number>; pokedex: any } | null = null;
+
   // Analyse en direct (calculée par le Pokédex)
   analyse: any = null;
   private equipeModifiee = new Subject<void>();
@@ -48,6 +51,15 @@ export class EquipeCreatComponent implements OnDestroy {
     this.source = this.brouillon.source;
     this.searchText = this.brouillon.recherche;
     this.charger();
+    this.http.get<any>(`${API_URL}/capture`).pipe(catchError(() => of(null))).subscribe(c => {
+      if (!c) return; // indisponible : le serveur refusera de toute façon un Pokémon verrouillé
+      this.capture = {
+        started: c.started,
+        especes: new Set(c.unlockedSpecies || []),
+        megas: new Set(c.unlockedMegas || []),
+        pokedex: c.pokedex,
+      };
+    });
     // Une analyse par modification, en ignorant les réponses devenues obsolètes
     this.equipeModifiee.pipe(
       debounceTime(250),
@@ -124,6 +136,12 @@ export class EquipeCreatComponent implements OnDestroy {
 
   // --- Équipe ---
 
+  /** Pas encore capturé : une forme suit son espèce, une Méga se débloque elle-même. */
+  verrouille(p: PokemonResume): boolean {
+    if (!this.capture) return false;
+    return p.isMega ? !this.capture.megas.has(Number(p.id)) : !this.capture.especes.has(p.baseSpecies);
+  }
+
   /** Ce Pokémon précis est-il déjà dans l'équipe ? */
   dansEquipe(p: PokemonResume): boolean {
     return this.equipe.some(m => m?.id === p.id);
@@ -142,6 +160,9 @@ export class EquipeCreatComponent implements OnDestroy {
 
   addToTeam(pokemon: PokemonResume) {
     // Mêmes règles que le service Équipes, vérifiées ici pour un retour immédiat
+    if (this.verrouille(pokemon)) {
+      return; // à capturer d'abord en mode Capture
+    }
     if (this.dansEquipe(pokemon) || this.especeDejaPrise(pokemon)) {
       return; // Species Clause : un seul exemplaire de chaque espèce
     }
@@ -168,8 +189,10 @@ export class EquipeCreatComponent implements OnDestroy {
       alert("Donne un nom à ton équipe.");
       return;
     }
-    if (this.equipe.includes(null)) {
-      alert('Votre équipe doit contenir 6 Pokémon.');
+    // De 1 à 6 Pokémon : en début de partie, on n'en a capturé que quelques-uns
+    const membres = this.equipe.filter(m => m);
+    if (membres.length === 0) {
+      alert('Ajoute au moins un Pokémon à ton équipe.');
       return;
     }
 
@@ -177,12 +200,12 @@ export class EquipeCreatComponent implements OnDestroy {
       nom: this.nomEquipe.trim(),
       typePrincipal: this.typeActif || '',
       isPublic: this.estPublique,
-      poke1: this.equipe[0]?.id,
-      poke2: this.equipe[1]?.id,
-      poke3: this.equipe[2]?.id,
-      poke4: this.equipe[3]?.id,
-      poke5: this.equipe[4]?.id,
-      poke6: this.equipe[5]?.id,
+      poke1: membres[0]?.id,
+      poke2: membres[1]?.id,
+      poke3: membres[2]?.id,
+      poke4: membres[3]?.id,
+      poke5: membres[4]?.id,
+      poke6: membres[5]?.id,
     };
 
     this.enregistrement = true;

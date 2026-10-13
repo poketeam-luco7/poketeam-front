@@ -108,6 +108,21 @@
 
 <div class="m-5 p-3 border rounded bg-light">
 
+    <!-- Progression du Pokédex : on ne compose qu'avec les Pokémon capturés -->
+    <div *ngIf="capture" class="bandeau-capture d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3 p-2 rounded">
+        <span *ngIf="capture.started">
+            Pokédex : <strong>{{ capture.pokedex?.captured }} / {{ capture.pokedex?.total }}</strong> capturés.
+            Les Pokémon en silhouette sont à capturer en mode Capture.
+        </span>
+        <span *ngIf="!capture.started">
+            Tu n'as encore capturé aucun Pokémon : choisis ton starter en mode Capture pour commencer.
+        </span>
+        <div class="d-flex gap-2">
+            <a routerLink="/pokedex" class="btn btn-sm btn-outline-success">Mon Pokédex</a>
+            <a routerLink="/capture" class="btn btn-sm btn-success">Mode Capture</a>
+        </div>
+    </div>
+
     <!-- Recherche + filtre de type (indépendant des générations) -->
     <div class="d-flex flex-wrap justify-content-center align-items-center gap-3 mb-3">
         <div class="input-group" style="max-width: 500px; height: 50px;">
@@ -150,20 +165,24 @@
     <div class="d-flex flex-wrap justify-content-center gap-4">
         <div *ngFor="let poke of pokemons"
             class="pokemon-card text-center d-flex flex-column align-items-center position-relative"
-            [class.dans-equipe]="dansEquipe(poke)" [class.espece-prise]="especeDejaPrise(poke)">
+            [class.dans-equipe]="dansEquipe(poke)" [class.espece-prise]="especeDejaPrise(poke)"
+            [class.verrouille]="verrouille(poke)">
 
             <img [src]="poke.image" [alt]="poke.name" class="rounded-circle border"
                 style="width: 100px; height: 100px; object-fit: cover;">
             <span *ngIf="poke.isMega" class="badge badge-mega position-absolute top-0 start-50 translate-middle-x">MÉGA</span>
             <span *ngIf="poke.isForm" class="badge badge-forme position-absolute top-0 start-50 translate-middle-x">FORME</span>
             <span *ngIf="dansEquipe(poke)" class="pastille-equipe" title="Dans l'équipe">✓</span>
+            <span *ngIf="verrouille(poke)" class="pastille-cadenas" title="À capturer en mode Capture">🔒</span>
 
 
             <div class="hover-actions d-flex flex-column justify-content-center align-items-center">
                 <button *ngIf="dansEquipe(poke)" class="btn btn-danger btn-sm mb-2" (click)="basculer(poke)">Retirer</button>
-                <button *ngIf="!dansEquipe(poke) && !especeDejaPrise(poke)" class="btn btn-primary btn-sm mb-2"
+                <button *ngIf="!dansEquipe(poke) && !especeDejaPrise(poke) && !verrouille(poke)" class="btn btn-primary btn-sm mb-2"
                     (click)="basculer(poke)">Ajouter</button>
-                <span *ngIf="especeDejaPrise(poke)" class="badge bg-secondary mb-2 text-wrap"
+                <span *ngIf="verrouille(poke) && !dansEquipe(poke)" class="badge bg-dark mb-2 text-wrap"
+                    style="max-width: 90px;">À capturer</span>
+                <span *ngIf="especeDejaPrise(poke) && !verrouille(poke)" class="badge bg-secondary mb-2 text-wrap"
                     style="max-width: 90px;">Espèce déjà prise</span>
                 <button class="btn btn-warning btn-sm" (click)="viewDetails(poke)">Détails</button>
             </div>

@@ -18,8 +18,7 @@ export class CaptureComponent {
   erreur = '';
   annonces: string[] = [];
 
-  // Édition de l'équipe
-  edition = false;
+  // Équipe composée pour la prochaine run (figée pendant la run)
   selection: (number | string)[] = [];
 
   private readonly noms = new NomPokemonPipe();
@@ -35,7 +34,7 @@ export class CaptureComponent {
 
   recharger() {
     this.http.get<any>(`${API_URL}/capture`).subscribe({
-      next: (e) => { this.etat = e; this.chargement = false; },
+      next: (e) => { this.etat = e; this.chargement = false; this.initSelection(); },
       error: (err) => this.echec(err),
     });
   }
@@ -48,6 +47,15 @@ export class CaptureComponent {
   private maj(e: any) {
     this.etat = { started: true, ...e };
     this.erreur = '';
+    this.initSelection();
+  }
+
+  /** On garde la composition précédente (sans ce qui n'est plus dans la collection),
+   *  ou on propose le starter. */
+  private initSelection() {
+    const ids = new Set((this.etat?.collection || []).map((c: any) => c.id));
+    this.selection = this.selection.filter(id => ids.has(id));
+    if (!this.selection.length && this.etat?.starter) this.selection = [this.etat.starter];
   }
 
   // --- Départ -----------------------------------------------------------------------
@@ -61,14 +69,14 @@ export class CaptureComponent {
 
   // --- Équipe -------------------------------------------------------------------------
 
-  get equipe(): any[] {
-    if (!this.etat?.collection) return [];
-    return this.etat.team.map((id: any) => this.etat.collection.find((c: any) => c.id === id)).filter((x: any) => x);
+  /** Équipe de la run en cours (instantanés stockés au lancement). */
+  get equipeRun(): any[] {
+    return this.etat?.run?.team || [];
   }
 
+  /** Victoires de l'espèce et prochain déblocage (une Méga compte pour son espèce). */
   progression(p: any) {
-    const nom = p.isMega ? null : p.name;
-    return nom ? this.etat.progress[nom] : null;
+    return this.etat?.progress?.[p.baseSpecies || p.name] || null;
   }
 
   pourcentage(prog: any): number {
@@ -80,29 +88,22 @@ export class CaptureComponent {
     return prog.next.length > 1 ? `${prog.next.length} évolutions possibles` : this.noms.transform(prog.next[0]);
   }
 
-  ouvrirEdition() {
-    this.selection = [...this.etat.team];
-    this.edition = true;
-  }
-
   basculer(id: number | string) {
+    if (this.etat.run) return;
     const i = this.selection.indexOf(id);
     if (i !== -1) this.selection.splice(i, 1);
     else if (this.selection.length < 6) this.selection.push(id);
   }
 
-  enregistrerEquipe() {
-    this.http.put<any>(`${API_URL}/capture/team`, { pokemonIds: this.selection }).subscribe({
-      next: () => { this.edition = false; this.recharger(); },
-      error: (err) => (this.erreur = err.error?.error || "L'équipe n'a pas pu être enregistrée."),
-    });
-  }
-
   // --- Runs ---------------------------------------------------------------------------
 
   lancerRun(tier: number) {
-    this.http.post<any>(`${API_URL}/capture/run`, { tier }).subscribe({
-      next: (run) => (this.etat.run = run),
+    if (!this.selection.length) {
+      this.erreur = 'Choisis au moins un Pokémon pour la run.';
+      return;
+    }
+    this.http.post<any>(`${API_URL}/capture/run`, { tier, pokemonIds: this.selection }).subscribe({
+      next: (run) => { this.etat.run = run; this.erreur = ''; },
       error: (err) => (this.erreur = err.error?.error || "La run n'a pas pu démarrer."),
     });
   }
