@@ -11,6 +11,7 @@ import { EquipeCreatComponent } from './equipe-creat/equipe-creat.component';
 import { PokemonDetailComponent } from './pokemon-detail/pokemon-detail.component';
 import { ProfilComponent } from './profil/profil.component';
 import { AuthInterceptor } from './service/auth/auth.interceptor';
+import { VersusComponent } from './versus/versus.component';
 
 @NgModule({
   declarations: [
@@ -21,6 +22,7 @@ import { AuthInterceptor } from './service/auth/auth.interceptor';
     EquipeCreatComponent,
     PokemonDetailComponent,
     ProfilComponent,
+    VersusComponent,
   ],
   imports: [
     BrowserModule,

@@ -20,6 +20,7 @@ export class EquipeCreatComponent {
   currentType: any;
   nomEquipe: string = '';
   enregistrement = false;
+  estPublique = false;
 
   constructor(private pokemonService: PokemonService, private router: Router, private http: HttpClient) { }
 
@@ -53,6 +54,7 @@ export class EquipeCreatComponent {
     const data = {
       nom: this.nomEquipe.trim(),
       typePrincipal: this.currentType || '',
+      isPublic: this.estPublique,
       poke1: this.equipe[0]?.id,
       poke2: this.equipe[1]?.id,
       poke3: this.equipe[2]?.id,

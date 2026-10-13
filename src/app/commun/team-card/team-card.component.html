@@ -1,5 +1,5 @@
 <div class="team-card p-3 border rounded bg-light">
-  <h5>{{team.nom}}</h5>
+  <h5>{{team.nom}} <span *ngIf="team.isPublic" class="badge bg-secondary align-middle fs-6">Publique</span></h5>
 
   <div class="d-flex justify-content-between align-items-start">
 
@@ -13,6 +13,7 @@
     </div>
 
     <div class="d-flex flex-column gap-2">
+      <button class="btn btn-primary btn-sm w-100" [routerLink]="['/versus']" [queryParams]="{ a: team.idTeam }">Combattre</button>
       <button class="btn btn-danger btn-sm w-100" (click)="supprimerTeam(team.idTeam)">Supprimer</button>
     </div>
 

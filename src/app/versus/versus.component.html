@@ -1,0 +1,105 @@
+<div class="m-5 p-3 border rounded bg-light">
+  <div class="d-flex justify-content-between align-items-center m-3">
+    <h2 class="mb-0">Affrontement</h2>
+    <button class="btn btn-primary" [routerLink]="['/liste-equipes']">Retour</button>
+  </div>
+
+  <p *ngIf="mesEquipes.length === 0" class="text-center text-muted">
+    Crée d'abord une équipe pour pouvoir combattre.
+  </p>
+
+  <!-- Choix des deux équipes -->
+  <div *ngIf="mesEquipes.length > 0" class="d-flex flex-wrap justify-content-center align-items-end gap-3 mb-4">
+    <div style="min-width: 240px;">
+      <label for="equipeA" class="form-label">Ton équipe</label>
+      <select id="equipeA" class="form-select form-select-lg" [(ngModel)]="idA" name="idA">
+        <option *ngFor="let t of mesEquipes" [value]="t.idTeam">{{ t.nom }}</option>
+      </select>
+    </div>
+
+    <span class="fs-2 fw-bold text-primary pb-1">VS</span>
+
+    <div style="min-width: 240px;">
+      <label for="equipeB" class="form-label">Adversaire</label>
+      <select id="equipeB" class="form-select form-select-lg" [(ngModel)]="idB" name="idB">
+        <option *ngFor="let t of adversaires" [value]="t.idTeam">{{ t.label }}</option>
+      </select>
+    </div>
+
+    <button class="btn btn-primary btn-lg" style="padding: 0.6rem 2rem;" (click)="lancer()" [disabled]="!peutLancer()">
+      {{ chargement ? 'Calcul...' : 'Combattre !' }}
+    </button>
+  </div>
+
+  <p *ngIf="idA && idA === idB" class="text-center text-danger">Choisis deux équipes différentes.</p>
+  <div *ngIf="erreur" class="alert alert-danger text-center">{{ erreur }}</div>
+
+  <!-- Résultat -->
+  <ng-container *ngIf="resultat">
+    <div class="text-center mb-4">
+      <span *ngIf="resultat.winner !== 'draw'" class="fs-3 fw-bold">
+        Victoire de {{ resultat.winner === 'A' ? resultat.teamA.name : resultat.teamB.name }} !
+      </span>
+      <span *ngIf="resultat.winner === 'draw'" class="fs-3 fw-bold">Égalité parfaite !</span>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-12 col-lg-6" *ngFor="let c of ['A', 'B']">
+        <ng-container *ngIf="cote($any(c)) as s">
+          <div class="combattant p-3 border rounded bg-white h-100"
+               [class.border-success]="s.gagnant" [class.gagnant]="s.gagnant">
+
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h4 class="mb-0">{{ s.equipe.nom }}</h4>
+              <span *ngIf="s.gagnant" class="badge bg-success fs-6">Vainqueur</span>
+            </div>
+
+            <!-- Membres, même style que les cartes d'équipe -->
+            <div class="d-flex gap-2 flex-wrap mb-3">
+              <div *ngFor="let p of s.equipe.members" class="text-center d-flex flex-column align-items-center">
+                <img [src]="p.sprite" [alt]="p.name" class="rounded-circle border bg-light"
+                     style="width: 60px; height: 60px;">
+                <small class="text-capitalize">{{ p.name }}</small>
+              </div>
+            </div>
+
+            <!-- Score final -->
+            <div class="d-flex justify-content-between">
+              <span>Score</span>
+              <strong class="fs-5">{{ s.score.score }}</strong>
+            </div>
+            <div class="progress mb-3" style="height: 14px;" role="progressbar"
+                 [attr.aria-valuenow]="largeurScore(s.score.score)" aria-valuemin="0" aria-valuemax="100">
+              <div class="progress-bar" [class.bg-success]="s.gagnant" [style.width.%]="largeurScore(s.score.score)"></div>
+            </div>
+
+            <!-- Détail du calcul -->
+            <table class="table table-sm mb-3">
+              <tbody>
+                <tr><td>Total des stats de base</td><td class="text-end">{{ s.score.statTotal }}</td></tr>
+                <tr><td>Avantage de type</td><td class="text-end">{{ signe(s.score.typeAdvantage) }}</td></tr>
+                <tr><td>Multiplicateur</td><td class="text-end">× {{ s.score.multiplier }}</td></tr>
+              </tbody>
+            </table>
+
+            <h6 class="mb-2">Défense face aux types de {{ s.adverse.nom }}</h6>
+            <div class="d-flex flex-wrap gap-2">
+              <span *ngFor="let d of details(s.score.defensiveDetail)" class="badge type-badge" [ngClass]="'bg-' + d.type">
+                {{ typeFr(d.type) | uppercase }}
+                <span class="valeur" [class.positif]="d.valeur > 0" [class.negatif]="d.valeur < 0">{{ signe(d.valeur) }}</span>
+              </span>
+            </div>
+            <small class="text-muted d-block mt-2">
+              Résistances moins faiblesses de l'équipe pour chaque type présent en face.
+            </small>
+          </div>
+        </ng-container>
+      </div>
+    </div>
+
+    <p class="text-center text-muted mt-4 mb-0">
+      Score = total des stats × (1 + {{ resultat.formula.typeWeight }} × avantage de type),
+      multiplicateur borné entre {{ resultat.formula.multiplierRange[0] }} et {{ resultat.formula.multiplierRange[1] }}.
+    </p>
+  </ng-container>
+</div>

@@ -12,6 +12,7 @@
 
       <!-- Afficher l'avatar quand isConnecter est true -->
       <div *ngIf="isConnecter" class="d-flex align-items-center">
+        <a routerLink="/versus" class="btn btn-outline-primary me-3">Versus</a>
         <a [routerLink]="'/profil'" class="d-flex align-items-center">
           <img [src]="photoProfil" alt="Profil" class="rounded-circle"
             style="width: 40px; height: 40px; object-fit: cover;">

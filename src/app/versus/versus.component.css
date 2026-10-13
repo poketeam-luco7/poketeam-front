@@ -1,0 +1,25 @@
+.combattant {
+  transition: box-shadow 0.3s ease;
+}
+
+.combattant.gagnant {
+  border-width: 3px !important;
+  box-shadow: 0 0 12px rgba(25, 135, 84, 0.25);
+}
+
+.type-badge {
+  font-size: 0.9rem;
+  padding: 0.45em 0.6em;
+}
+
+.type-badge .valeur {
+  display: inline-block;
+  margin-left: 0.4em;
+  padding: 0 0.4em;
+  border-radius: 0.4em;
+  background: rgba(255, 255, 255, 0.85);
+  color: #212529;
+}
+
+.type-badge .valeur.positif { color: #198754; }
+.type-badge .valeur.negatif { color: #dc3545; }
