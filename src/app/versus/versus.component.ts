@@ -33,6 +33,10 @@ export class VersusComponent implements OnDestroy {
   chargement = false;
   erreur = '';
 
+  // Mode « boss de la semaine » (route /boss)
+  modeBoss = false;
+  boss: any = null;
+
   // Mise en scène
   phase: Phase = 'repos';
   dialogue = '';
@@ -53,6 +57,21 @@ export class VersusComponent implements OnDestroy {
   constructor(private http: HttpClient, private route: ActivatedRoute) {}
 
   ngOnInit() {
+    this.modeBoss = !!this.route.snapshot.data['boss'];
+    if (this.modeBoss) {
+      forkJoin({
+        miennes: this.http.get<any[]>(`${API_URL}/teams`),
+        boss: this.http.get<any>(`${API_URL}/pokeapi/boss`),
+      }).subscribe({
+        next: ({ miennes, boss }) => {
+          this.mesEquipes = miennes;
+          this.boss = boss;
+          this.idA = this.route.snapshot.queryParamMap.get('a') || miennes[0]?.idTeam || '';
+        },
+        error: () => (this.erreur = "Le boss de la semaine n'a pas pu être chargé."),
+      });
+      return;
+    }
     forkJoin({
       miennes: this.http.get<any[]>(`${API_URL}/teams`),
       publiques: this.http.get<any[]>(`${API_URL}/teams/public`),
@@ -75,7 +94,8 @@ export class VersusComponent implements OnDestroy {
   }
 
   peutLancer(): boolean {
-    return !!this.idA && !!this.idB && this.idA !== this.idB && !this.chargement && !this.enCours;
+    if (this.chargement || this.enCours || !this.idA) return false;
+    return this.modeBoss ? !!this.boss : !!this.idB && this.idA !== this.idB;
   }
 
   get enCours(): boolean {
@@ -85,8 +105,15 @@ export class VersusComponent implements OnDestroy {
   lancer() {
     this.chargement = true;
     this.erreur = '';
-    this.http.post<any>(`${API_URL}/teams/${this.idA}/versus/${this.idB}`, {}).subscribe({
+    const url = this.modeBoss
+      ? `${API_URL}/teams/${this.idA}/boss`
+      : `${API_URL}/teams/${this.idA}/versus/${this.idB}`;
+    this.http.post<any>(url, {}).subscribe({
       next: (r) => {
+        if (r.teams.B.boss) {
+          r.teams.B.nom = this.noms.transform(r.teams.B.nom);
+          r.teamB.name = r.teams.B.nom;
+        }
         this.resultat = r;
         this.chargement = false;
         this.mouvementReduit ? this.passer() : this.jouer();
@@ -116,7 +143,9 @@ export class VersusComponent implements OnDestroy {
 
     // 2. Les Pokémon sortent de leurs Poké Balls
     this.phase = 'envoi';
-    this.ecrire(`${A.nom} et ${B.nom} envoient leurs Pokémon !`);
+    this.ecrire(B.boss
+      ? `Un ${B.nom} gigantesque apparaît ! ${A.nom} envoie ses Pokémon !`
+      : `${A.nom} et ${B.nom} envoient leurs Pokémon !`);
     const total = Math.max(A.members.length, B.members.length);
     for (let i = 1; i <= total; i++) {
       this.envoyes = i;
@@ -134,7 +163,7 @@ export class VersusComponent implements OnDestroy {
     // 4. Échanges d'attaques par type
     this.phase = 'attaques';
     for (const att of this.attaques()) {
-      const attaquant = att.de === 'A' ? A.nom : B.nom;
+      const attaquant = att.de === 'A' ? A.nom : (B.boss ? 'Le boss' : B.nom);
       const defenseur: Cote = att.de === 'A' ? 'B' : 'A';
       this.attaque = att;
       this.numeroAttaque++;
@@ -190,7 +219,14 @@ export class VersusComponent implements OnDestroy {
   private terminer() {
     const r = this.resultat;
     this.phase = 'ko';
-    if (r.winner === 'draw') {
+    if (r.teams.B.boss && r.winner !== 'draw') {
+      if (r.winner === 'A') {
+        this.ecrire(`${r.teams.B.nom} est vaincu ! Bravo ${r.teams.A.nom} !`);
+        this.lancerConfettis(r.teams.A);
+      } else {
+        this.ecrire(`${r.teams.A.nom} est K.O.… Le boss est trop puissant !`);
+      }
+    } else if (r.winner === 'draw') {
       this.ecrire(`Égalité parfaite ! Les deux équipes restent debout.`);
     } else {
       const gagnant = r.winner === 'A' ? r.teams.A : r.teams.B;
@@ -271,6 +307,19 @@ export class VersusComponent implements OnDestroy {
   estPerdant(c: Cote): boolean {
     return (this.phase === 'ko' || this.phase === 'fin')
       && this.resultat?.winner !== 'draw' && this.resultat?.winner !== c;
+  }
+
+  get banniere(): string {
+    const r = this.resultat;
+    if (r.winner === 'draw') return 'ÉGALITÉ !';
+    if (r.teams.B.boss) return r.winner === 'A' ? 'BOSS VAINCU !' : 'DÉFAITE…';
+    return 'VICTOIRE !';
+  }
+
+  /** Fin du changement de boss, en jours. */
+  get joursRestants(): number {
+    if (!this.boss) return 0;
+    return Math.max(1, Math.ceil((new Date(this.boss.endsAt).getTime() - Date.now()) / 86400000));
   }
 
   couleurPv(pv: number): string {

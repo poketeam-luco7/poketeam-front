@@ -102,8 +102,27 @@ export class EquipeCreatComponent {
 
   // --- Équipe ---
 
+  /** Ce Pokémon précis est-il déjà dans l'équipe ? */
+  dansEquipe(p: PokemonResume): boolean {
+    return this.equipe.some(m => m?.id === p.id);
+  }
+
+  /** Une autre forme de la même espèce est dans l'équipe (ex. Dracaufeu / Méga-Dracaufeu X). */
+  especeDejaPrise(p: PokemonResume): boolean {
+    return !this.dansEquipe(p) && this.equipe.some(m => m?.baseSpecies === p.baseSpecies);
+  }
+
+  /** Clic sur « Ajouter » ou « Retirer » depuis la liste. */
+  basculer(p: PokemonResume) {
+    const index = this.equipe.findIndex(m => m?.id === p.id);
+    index !== -1 ? this.retirerDeLEquipe(index) : this.addToTeam(p);
+  }
+
   addToTeam(pokemon: PokemonResume) {
-    // Même règle que le service Équipes, vérifiée ici pour un retour immédiat
+    // Mêmes règles que le service Équipes, vérifiées ici pour un retour immédiat
+    if (this.dansEquipe(pokemon) || this.especeDejaPrise(pokemon)) {
+      return; // Species Clause : un seul exemplaire de chaque espèce
+    }
     if (pokemon.isMega && this.equipe.some(m => m?.isMega)) {
       alert('Une seule Méga-Évolution par équipe.');
       return;

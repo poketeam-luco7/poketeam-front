@@ -217,3 +217,43 @@
   .arene *, .arene *::before, .arene *::after { animation: none !important; transition: none !important; }
   .pokemon.sorti { opacity: 1; transform: none; }
 }
+
+/* ===================== Boss de la semaine ===================== */
+.carte-boss {
+  border-radius: 12px; padding: 1.5rem; color: #fff;
+  background: radial-gradient(circle at 25% 40%, #6f2dbd 0%, #2b0f4c 55%, #12061f 100%);
+  border: 3px solid #ffd700;
+}
+.boss-portrait {
+  max-width: 100%; width: 300px;
+  filter: drop-shadow(0 0 25px rgba(255, 215, 0, 0.6));
+  animation: respiration 3s ease-in-out infinite;
+}
+@keyframes respiration { 50% { transform: scale(1.04) translateY(-6px); } }
+
+.arene-boss {
+  background:
+    radial-gradient(ellipse at 75% 25%, rgba(255, 80, 80, 0.55) 0, rgba(255, 80, 80, 0) 45%),
+    linear-gradient(to bottom, #2b0f4c 0%, #6f2dbd 46%, #6b8f5a 46%, #4e7041 100%);
+}
+.arene.tremble { animation: tremblement 0.12s linear 6; }
+@keyframes tremblement {
+  0%, 100% { transform: translate(0, 0); } 25% { transform: translate(-6px, 3px); }
+  50% { transform: translate(5px, -4px); } 75% { transform: translate(-3px, -2px); }
+}
+
+.intro-boss { background: linear-gradient(135deg, #12061f, #6f2dbd) !important; color: #ffd700 !important; }
+
+.equipe-boss { right: 7%; top: 0; }
+.boss-geant img {
+  width: clamp(150px, 24vw, 270px) !important; height: auto !important;
+  filter: drop-shadow(0 0 22px rgba(255, 40, 40, 0.8));
+}
+.boss-geant.sorti { animation: arrivee-boss 1.2s cubic-bezier(.2, 1.2, .4, 1) forwards; }
+.boss-geant.sorti img { animation: respiration 2.4s 1.2s ease-in-out infinite; }
+@keyframes arrivee-boss {
+  0% { opacity: 0; transform: scale(0.2); filter: brightness(0); }
+  60% { opacity: 1; transform: scale(1.15); filter: brightness(3); }
+  100% { opacity: 1; transform: scale(1); filter: brightness(1); }
+}
+.arene-boss .plateforme-b { width: 40%; right: 5%; top: 44%; height: 70px; }

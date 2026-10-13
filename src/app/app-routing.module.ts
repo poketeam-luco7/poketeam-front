@@ -15,7 +15,8 @@ const routes: Routes = [
   {path:'equipe-creation', component: EquipeCreatComponent, canActivate: [authGuard]},
   {path: 'pokemon/:id', component: PokemonDetailComponent},
   {path:'profil', component : ProfilComponent, canActivate: [authGuard]},
-  {path:'versus', component: VersusComponent, canActivate: [authGuard]}
+  {path:'versus', component: VersusComponent, canActivate: [authGuard]},
+  {path:'boss', component: VersusComponent, canActivate: [authGuard], data: { boss: true }}
 ];
 
 @NgModule({

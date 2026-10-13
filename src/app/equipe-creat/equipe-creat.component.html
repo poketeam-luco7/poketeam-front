@@ -148,15 +148,21 @@
     <!-- affichage des pokemon avec hover d'ajout ou de détail-->
     <div class="d-flex flex-wrap justify-content-center gap-4">
         <div *ngFor="let poke of pokemons"
-            class="pokemon-card text-center d-flex flex-column align-items-center position-relative">
+            class="pokemon-card text-center d-flex flex-column align-items-center position-relative"
+            [class.dans-equipe]="dansEquipe(poke)" [class.espece-prise]="especeDejaPrise(poke)">
 
             <img [src]="poke.image" [alt]="poke.name" class="rounded-circle border"
                 style="width: 100px; height: 100px; object-fit: cover;">
             <span *ngIf="poke.isMega" class="badge badge-mega position-absolute top-0 start-50 translate-middle-x">MÉGA</span>
+            <span *ngIf="dansEquipe(poke)" class="pastille-equipe" title="Dans l'équipe">✓</span>
 
 
             <div class="hover-actions d-flex flex-column justify-content-center align-items-center">
-                <button class="btn btn-primary btn-sm mb-2" (click)="addToTeam(poke)">Ajouter</button>
+                <button *ngIf="dansEquipe(poke)" class="btn btn-danger btn-sm mb-2" (click)="basculer(poke)">Retirer</button>
+                <button *ngIf="!dansEquipe(poke) && !especeDejaPrise(poke)" class="btn btn-primary btn-sm mb-2"
+                    (click)="basculer(poke)">Ajouter</button>
+                <span *ngIf="especeDejaPrise(poke)" class="badge bg-secondary mb-2 text-wrap"
+                    style="max-width: 90px;">Espèce déjà prise</span>
                 <button class="btn btn-warning btn-sm" (click)="viewDetails(poke)">Détails</button>
             </div>
 

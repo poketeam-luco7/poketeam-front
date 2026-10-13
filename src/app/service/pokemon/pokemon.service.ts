@@ -9,11 +9,15 @@ export interface PokemonResume {
   image: string;
   types: string[];
   isMega: boolean;
+  baseSpecies: string;
 }
 
 // Le Pokédex renvoie { id, name, sprite, types, isMega } : on garde le nom "image" utilisé par les vues
 const versResume = (list: any[]): PokemonResume[] =>
-  list.map(p => ({ id: p.id, name: p.name, image: p.sprite, types: p.types, isMega: !!p.isMega }));
+  list.map(p => ({
+    id: p.id, name: p.name, image: p.sprite, types: p.types,
+    isMega: !!p.isMega, baseSpecies: p.baseSpecies || p.name,
+  }));
 
 @Injectable({
   providedIn: 'root'

@@ -1,6 +1,6 @@
 <div class="m-5 p-3 border rounded bg-light">
   <div class="d-flex justify-content-between align-items-center m-3">
-    <h2 class="mb-0">Affrontement</h2>
+    <h2 class="mb-0">{{ modeBoss ? 'Boss de la semaine' : 'Affrontement' }}</h2>
     <button class="btn btn-primary" [routerLink]="['/liste-equipes']">Retour</button>
   </div>
 
@@ -8,8 +8,41 @@
     Crée d'abord une équipe pour pouvoir combattre.
   </p>
 
+  <!-- Présentation du boss -->
+  <div *ngIf="modeBoss && boss" class="carte-boss mb-4">
+    <div class="row align-items-center g-3">
+      <div class="col-md-5 text-center">
+        <img [src]="boss.artwork" [alt]="boss.name" class="boss-portrait">
+      </div>
+      <div class="col-md-7">
+        <span class="badge bg-danger mb-2">Change dans {{ joursRestants }} jour{{ joursRestants > 1 ? 's' : '' }}</span>
+        <h3 class="mb-2">{{ boss.name | nomPokemon }}</h3>
+        <div class="d-flex gap-2 mb-3">
+          <span *ngFor="let t of boss.types" class="badge fs-6" [ngClass]="'bg-' + t">{{ typeFr(t) }}</span>
+        </div>
+        <p class="mb-2">Puissance : <strong class="fs-4">{{ boss.statTotal }}</strong>
+          <small class="opacity-75">({{ boss.baseStatTotal }} × 5)</small></p>
+        <p class="mb-1 small text-uppercase opacity-75">Points faibles</p>
+        <div class="d-flex flex-wrap gap-1 mb-3">
+          <span *ngFor="let t of boss.weaknesses" class="badge" [ngClass]="'bg-' + t">{{ typeFr(t) }}</span>
+        </div>
+        <div class="d-flex flex-wrap align-items-end gap-2" *ngIf="mesEquipes.length > 0">
+          <div style="min-width: 220px;">
+            <label for="equipeBoss" class="form-label small mb-1">Ton équipe</label>
+            <select id="equipeBoss" class="form-select" [(ngModel)]="idA" name="idBoss" [disabled]="enCours">
+              <option *ngFor="let t of mesEquipes" [value]="t.idTeam">{{ t.nom }}</option>
+            </select>
+          </div>
+          <button class="btn btn-warning btn-lg fw-bold" (click)="lancer()" [disabled]="!peutLancer()">
+            {{ chargement ? 'Calcul...' : 'Défier le boss !' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Choix des deux équipes -->
-  <div *ngIf="mesEquipes.length > 0" class="d-flex flex-wrap justify-content-center align-items-end gap-3 mb-4">
+  <div *ngIf="!modeBoss && mesEquipes.length > 0" class="d-flex flex-wrap justify-content-center align-items-end gap-3 mb-4">
     <div style="min-width: 240px;">
       <label for="equipeA" class="form-label">Ton équipe</label>
       <select id="equipeA" class="form-select form-select-lg" [(ngModel)]="idA" name="idA" [disabled]="enCours">
@@ -35,12 +68,15 @@
   <div *ngIf="erreur" class="alert alert-danger text-center">{{ erreur }}</div>
 
   <!-- ====================== L'arène de combat ====================== -->
-  <div *ngIf="resultat && phase !== 'repos'" class="arene" role="region" aria-label="Animation du combat">
+  <div *ngIf="resultat && phase !== 'repos'" class="arene" role="region" aria-label="Animation du combat"
+       [class.tremble]="phase === 'envoi' && resultat.teams.B.boss" [class.arene-boss]="resultat.teams.B.boss">
 
     <!-- Écran d'intro -->
     <div *ngIf="phase === 'intro'" class="intro">
       <div class="intro-moitie intro-a"><span>{{ resultat.teams.A.nom }}</span></div>
-      <div class="intro-moitie intro-b"><span>{{ resultat.teams.B.nom }}</span></div>
+      <div class="intro-moitie intro-b" [class.intro-boss]="resultat.teams.B.boss">
+        <span>{{ resultat.teams.B.boss ? 'BOSS' : resultat.teams.B.nom }}</span>
+      </div>
       <div class="intro-vs">VS</div>
     </div>
 
@@ -49,11 +85,19 @@
       <div class="plateforme plateforme-a"></div>
 
       <!-- Adversaire (en haut, vu de face) -->
-      <div class="equipe equipe-b" [class.touche]="impact === 'B'" [class.protege]="bouclier === 'B'"
+      <div class="equipe equipe-b" [class.equipe-boss]="resultat.teams.B.boss"
+           [class.touche]="impact === 'B'" [class.protege]="bouclier === 'B'"
            [class.gagnant]="estGagnant('B')" [class.perdant]="estPerdant('B')">
-        <div *ngFor="let p of resultat.teams.B.members; let i = index" class="pokemon" [class.sorti]="i < envoyes">
-          <span class="pokeball"></span>
-          <img [src]="p.sprite" [alt]="nom(p)" [title]="nom(p)">
+        <ng-container *ngIf="!resultat.teams.B.boss">
+          <div *ngFor="let p of resultat.teams.B.members; let i = index" class="pokemon" [class.sorti]="i < envoyes">
+            <span class="pokeball"></span>
+            <img [src]="p.sprite" [alt]="nom(p)" [title]="nom(p)">
+          </div>
+        </ng-container>
+        <!-- Le boss : un seul Pokémon, géant -->
+        <div *ngIf="resultat.teams.B.boss" class="pokemon boss-geant" [class.sorti]="envoyes > 0">
+          <img [src]="resultat.teams.B.members[0].artwork" (error)="secours($event, resultat.teams.B.members[0])"
+               [alt]="resultat.teams.B.nom">
         </div>
       </div>
 
@@ -69,7 +113,7 @@
       <!-- Encadrés façon jeu : nom, score, barre de PV -->
       <div class="encadre encadre-b" [class.encadre-gagnant]="estGagnant('B')">
         <div class="d-flex justify-content-between gap-3">
-          <strong>{{ resultat.teams.B.nom }}</strong>
+          <strong><span *ngIf="resultat.teams.B.boss">👑 </span>{{ resultat.teams.B.nom }}</strong>
           <span class="score">{{ score.B }}</span>
         </div>
         <div class="pv"><span class="pv-label">PV</span>
@@ -96,7 +140,7 @@
 
       <!-- Victoire -->
       <div *ngIf="phase === 'ko' || phase === 'fin'" class="banniere">
-        {{ resultat.winner === 'draw' ? 'ÉGALITÉ !' : 'VICTOIRE !' }}
+        {{ banniere }}
       </div>
       <span *ngFor="let c of confettis" class="confetti" [style.left.%]="c.x" [style.background]="c.couleur"
             [style.animation-delay.s]="c.delai" [style.width.px]="c.taille" [style.height.px]="c.taille * 0.5"></span>
