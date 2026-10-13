@@ -54,15 +54,3 @@
   letter-spacing: 0.05em;
   z-index: 2;
 }
-
-.btn-formes-onglet {
-  border: 1px solid #0f9b8e;
-  color: #0f9b8e;
-}
-
-.btn-formes-onglet:hover,
-.btn-formes-onglet.active {
-  background: linear-gradient(135deg, #0f9b8e, #1fc8db);
-  border-color: transparent;
-  color: white;
-}

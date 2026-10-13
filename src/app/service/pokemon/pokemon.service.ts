@@ -27,17 +27,13 @@ export class PokemonService {
 
   constructor(private http: HttpClient) {}
 
+  // Chaque Pokémon est suivi de ses formes alternatives (Giratina, Giratina Origine...)
   getGeneration(num: number): Observable<PokemonResume[]> {
     return this.http.get<any[]>(`${API_URL}/pokeapi/generation/${num}`).pipe(map(versResume));
   }
 
   getMegas(): Observable<PokemonResume[]> {
     return this.http.get<any[]>(`${API_URL}/pokeapi/megas`).pipe(map(versResume));
-  }
-
-  // Formes alternatives : Giratina-Origine, Motisma, formes régionales, Arceus par type...
-  getForms(): Observable<PokemonResume[]> {
-    return this.http.get<any[]>(`${API_URL}/pokeapi/forms`).pipe(map(versResume));
   }
 
   // Tous les Pokémon d'un type, toutes générations confondues

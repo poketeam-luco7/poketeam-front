@@ -6,7 +6,7 @@ import { API_URL } from '../api.config';
 import { PokemonResume, PokemonService } from '../service/pokemon/pokemon.service';
 import { TYPES, typeFr } from '../commun/pokemon-types';
 
-type Source = { kind: 'generation'; num: number } | { kind: 'mega' } | { kind: 'forms' } | { kind: 'type'; type: string };
+type Source = { kind: 'generation'; num: number } | { kind: 'mega' } | { kind: 'type'; type: string };
 
 @Component({
   selector: 'app-equipe-creat',
@@ -64,11 +64,6 @@ export class EquipeCreatComponent {
     this.charger();
   }
 
-  choisirFormes() {
-    this.source = { kind: 'forms' };
-    this.charger();
-  }
-
   choisirType(type: string | null) {
     this.source = type ? { kind: 'type', type } : { kind: 'generation', num: 1 };
     this.charger();
@@ -87,7 +82,6 @@ export class EquipeCreatComponent {
     const requete: Observable<PokemonResume[]> =
       s.kind === 'generation' ? this.pokemonService.getGeneration(s.num)
       : s.kind === 'mega' ? this.pokemonService.getMegas()
-      : s.kind === 'forms' ? this.pokemonService.getForms()
       : this.pokemonService.getByType(s.type);
 
     this.chargement = true;

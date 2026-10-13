@@ -138,8 +138,6 @@
             (click)="choisirGeneration(g)">Gén. {{ g }}</button>
         <button type="button" class="btn btn-mega-onglet" [class.active]="source.kind === 'mega'"
             (click)="choisirMegas()">Méga</button>
-        <button type="button" class="btn btn-formes-onglet" [class.active]="source.kind === 'forms'"
-            (click)="choisirFormes()">Formes</button>
     </div>
 
     <p *ngIf="typeActif" class="text-center text-muted">
