@@ -1,8 +1,8 @@
 import { Component } from '@angular/core';
 import { PokemonService } from '../service/pokemon/pokemon.service';
 import { Router } from '@angular/router';
-import { Observable, map } from 'rxjs';
-import { HttpClient,HttpHeaders } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
+import { API_URL } from '../api.config';
 @Component({
   selector: 'app-equipe-creat',
   standalone: false,
@@ -14,21 +14,19 @@ export class EquipeCreatComponent {
   allPokemons: any[] = [];
   pokemons: any[] = [];
   equipe: any[] = [null, null, null, null, null, null];
-  private apiUrl = 'http://localhost:3000/pokeapi/generation/';
   id: number = 1;
   types: string[] = [];
   typeIndex: number = 0;
   currentType: any;
-  httpHeaders: HttpHeaders = new HttpHeaders().append('Content-Type', 'application/json').append('Authorization', 'Bearer' + ' ' + localStorage.getItem('accessToken'));
   nomEquipe: string = '';
+  enregistrement = false;
 
   constructor(private pokemonService: PokemonService, private router: Router, private http: HttpClient) { }
 
   ngOnInit(): void {
-    this.getPokemons().subscribe((data: any[]) => {
+    this.pokemonService.getGeneration(this.id).subscribe((data: any[]) => {
       this.allPokemons = data;
       this.pokemons = [...this.allPokemons];
-    
 
     const uniqueTypes = new Set<string>();  // Utilisation d'un Set pour garantir l'unicité
     this.allPokemons.forEach((poke: any) => {
@@ -42,13 +40,18 @@ export class EquipeCreatComponent {
   }
 
   newTeam(): void{
+    // Correctif : le nom est maintenant lié au champ (il n'était jamais envoyé)
+    if (!this.nomEquipe.trim()) {
+      alert("Donne un nom à ton équipe.");
+      return;
+    }
     if (this.equipe.includes(null)) {
       alert('Votre équipe doit contenir 6 Pokémon.');
       return;
     }
-  
+
     const data = {
-      nom: this.nomEquipe,
+      nom: this.nomEquipe.trim(),
       typePrincipal: this.currentType || '',
       poke1: this.equipe[0]?.id,
       poke2: this.equipe[1]?.id,
@@ -57,33 +60,26 @@ export class EquipeCreatComponent {
       poke5: this.equipe[4]?.id,
       poke6: this.equipe[5]?.id,
     };
-  
-    this.http.post('http://localhost:3000/teams', data, { headers: this.httpHeaders }).subscribe({
-      next: (res) => {
-        alert('Équipe enregistrée avec succès !');
+
+    this.enregistrement = true;
+    this.http.post(`${API_URL}/teams`, data).subscribe({
+      next: () => {
         this.router.navigate(['/liste-equipes']);
       },
       error: (err) => {
-        console.error('Erreur lors de l\'enregistrement :', err);
-        alert('Erreur lors de l\'enregistrement de l\'équipe.');
+        this.enregistrement = false;
+        alert(err.error?.error || "Erreur lors de l'enregistrement de l'équipe.");
       }
     });
-}
-  getPokemons(): Observable<any> {
-    return this.http.get<any>(this.apiUrl + this.id).pipe(
-      map((response: any[]) =>
-        response
-          .map((poke: any[]) => ({
-            id: Number(poke[0]),
-            name: poke[1],
-            image: poke[2],
-            types: poke[3]
-          }))
-          .sort((a, b) => a.id - b.id)
-      )
-    );
   }
 
+  annuler(): void {
+    this.router.navigate(['/liste-equipes']);
+  }
+
+  retirerDeLEquipe(index: number): void {
+    this.equipe[index] = null;
+  }
 
   filterByType(type: string): void {
     // Si aucun type n'est sélectionné, on réinitialise et on montre tous les Pokémon
@@ -104,11 +100,10 @@ export class EquipeCreatComponent {
     }
     this.currentType = undefined;
 
-    this.getPokemons().subscribe((data: any[]) => {
+    this.pokemonService.getGeneration(this.id).subscribe((data: any[]) => {
       this.allPokemons = data;
       this.pokemons = [...this.allPokemons];
     });
-    console.log(this.id);
   }
 
   filterPokemons(): void {

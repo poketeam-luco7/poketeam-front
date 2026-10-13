@@ -34,6 +34,8 @@
         <label for="exampleInputPassword1"  class="form-label">Mot de Passe</label>
         <input type="password" [(ngModel)]="registerData.mdp" name="mdp" class="form-control" id="inputPassword1">
       </div>      
+      <div *ngIf="message" class="alert alert-success py-2">{{ message }}</div>
+      <div *ngIf="erreur" class="alert alert-danger py-2">{{ erreur }}</div>
       <button type="submit" class="btn btn-primary">S'inscrire</button>
     </form>
   </div>

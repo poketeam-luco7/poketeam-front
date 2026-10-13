@@ -13,7 +13,16 @@ export class AuthService {
     return localStorage.getItem('accessToken');
   }
 
-  // Fonction pour générer les headers avec le token
+  isLoggedIn(): boolean {
+    return this.getToken() !== null;
+  }
+
+  logout(): void {
+    localStorage.clear();
+    location.href = '/accueil';
+  }
+
+  // Conservé pour compatibilité : l'intercepteur ajoute désormais le token tout seul
   getAuthHeaders(): HttpHeaders {
     const token = this.getToken();
     let headers = new HttpHeaders();

@@ -6,15 +6,18 @@
     </div>
     <div class="input-group mb-3" style="max-width: 500px; height: 50px; cursor: pointer;">
         <span class="input-group-text" id="basic-addon1">Equipe : </span>
-        <input type="text" class="form-control" placeholder="Nom de l'équipe" name="nomEquipe" id="nomEquipe">
+        <input type="text" class="form-control" placeholder="Nom de l'équipe" name="nomEquipe" id="nomEquipe"
+            [(ngModel)]="nomEquipe">
     </div>
 
     <div class="d-flex justify-content-between align-items-start">
 
         <div class="d-flex gap-2 align-items-center flex-wrap">
             <div class="d-flex gap-2 align-items-center flex-wrap">
-                <div *ngFor="let member of equipe"
-                    class="text-center justify-content-center d-flex flex-column align-items-center">
+                <div *ngFor="let member of equipe; let i = index"
+                    class="text-center justify-content-center d-flex flex-column align-items-center"
+                    [style.cursor]="member ? 'pointer' : 'default'" [title]="member ? 'Retirer' : ''"
+                    (click)="member && retirerDeLEquipe(i)">
                     <img *ngIf="member" [src]="member.image" alt="{{ member.name }}" class="rounded-circle border"
                         style="width: 100px; height: 100px;">
 
@@ -28,8 +31,9 @@
 
 
             <div class="d-flex flex-column gap-2">
-                <button class="btn btn-primary btn-lg w-100" style="padding: 1rem" (click)="newTeam()">Valider</button>
-                <button class="btn btn-danger btn-lg w-100" style="padding: 1rem">Annuler</button>
+                <button class="btn btn-primary btn-lg w-100" style="padding: 1rem" (click)="newTeam()"
+                    [disabled]="enregistrement">{{ enregistrement ? 'Enregistrement...' : 'Valider' }}</button>
+                <button class="btn btn-danger btn-lg w-100" style="padding: 1rem" (click)="annuler()">Annuler</button>
             </div>
 
 

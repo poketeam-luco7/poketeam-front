@@ -6,10 +6,11 @@ import { AppComponent } from './app.component';
 import { AccueilComponent } from './accueil/accueil.component';
 import { EquipesListeComponent } from './equipes-liste/equipes-liste.component';
 import { TeamCardComponent } from './commun/team-card/team-card.component';
-import { HttpClientModule } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { EquipeCreatComponent } from './equipe-creat/equipe-creat.component';
 import { PokemonDetailComponent } from './pokemon-detail/pokemon-detail.component';
 import { ProfilComponent } from './profil/profil.component';
+import { AuthInterceptor } from './service/auth/auth.interceptor';
 
 @NgModule({
   declarations: [
@@ -20,8 +21,6 @@ import { ProfilComponent } from './profil/profil.component';
     EquipeCreatComponent,
     PokemonDetailComponent,
     ProfilComponent,
-
-    
   ],
   imports: [
     BrowserModule,
@@ -29,7 +28,9 @@ import { ProfilComponent } from './profil/profil.component';
     FormsModule,
     HttpClientModule
   ],
-  providers: [],
+  providers: [
+    { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true }
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

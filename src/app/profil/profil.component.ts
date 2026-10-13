@@ -1,6 +1,6 @@
-import { Component, Input } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
-
+import { Component } from '@angular/core';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { API_URL } from '../api.config';
 
 @Component({
   selector: 'app-profil',
@@ -10,15 +10,12 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
 })
 export class ProfilComponent {
 
-  @Input() profil: any;
-
-  httpHeaders: HttpHeaders = new HttpHeaders().append('Content-Type', 'application/json').append('Authorization', 'Bearer' + ' ' + localStorage.getItem('accessToken'));
-
   constructor(private http: HttpClient){}
 
-
-  selectedProfilePic: string = '/img/pokeball.png'; // Met ton chemin par défaut ici
+  selectedProfilePic: string = '/img/pokeball.png';
   isModalOpen: boolean = false;
+  message = '';
+  erreur = '';
 
   availablePics: string[] = [
     '/img/pokeball.png',
@@ -27,12 +24,22 @@ export class ProfilComponent {
     '/img/masterball.png',
   ];
 
+  registerData = {
+    mail: '',
+    nom: '',
+    prenom: '',
+    mdp: ''
+  };
 
   ngOnInit(){
-    this.http.get('http://localhost:3000/auth/profile', {headers : this.httpHeaders} ).subscribe({
-      next: (response) => {
-        this.profil = response;
-        console.log(this.profil);
+    // Correctif : le formulaire est pré-rempli depuis le profil
+    // (value="..." est ignoré quand on utilise [(ngModel)])
+    this.http.get<any>(`${API_URL}/auth/profile`).subscribe({
+      next: (profil) => {
+        this.registerData.mail = profil.mail;
+        this.registerData.nom = profil.nom;
+        this.registerData.prenom = profil.prenom;
+        this.selectedProfilePic = profil.photoprofil || this.selectedProfilePic;
       }
     });
   }
@@ -50,30 +57,31 @@ export class ProfilComponent {
     this.closeModal();
   }
 
-
-  registerData = {
-    mail: '',
-    nom: '',
-    prenom: '',
-    photoProfil: '',
-    mdp: ''
-  };
-
   modifierProfil(){
-    let body;
-    if (this.registerData.mdp = ''){
-      body = { mail: this.registerData.mail, nom: this.registerData.nom, prenom: this.registerData.prenom, photoProfil: this.selectedProfilePic}
-    }else{
-      body = { mail: this.registerData.mail, nom: this.registerData.nom, prenom: this.registerData.prenom, photoProfil: this.selectedProfilePic, mdp: this.registerData.mdp}
+    this.message = '';
+    this.erreur = '';
+    const body: any = {
+      mail: this.registerData.mail,
+      nom: this.registerData.nom,
+      prenom: this.registerData.prenom,
+      photoProfil: this.selectedProfilePic,
+    };
+    // Correctif : `if (mdp = '')` était une affectation qui vidait le mot de passe
+    if (this.registerData.mdp !== '') {
+      body.mdp = this.registerData.mdp;
     }
-    console.log(body);
 
-    this.http.put('http://localhost:3000/users', body, {headers : this.httpHeaders} ).subscribe({
-      next: (response) => {
-        this.profil = response;
-        console.log(this.profil);
+    this.http.put<any>(`${API_URL}/users`, body).subscribe({
+      next: (profil) => {
+        localStorage.setItem('photoprofil', profil.photoprofil);
+        this.registerData.mdp = '';
+        this.message = 'Profil mis à jour.';
+      },
+      error: (err: HttpErrorResponse) => {
+        this.erreur = err.status === 409
+          ? 'Cette adresse mail est déjà utilisée.'
+          : 'Vérifie les champs (mot de passe : 6 caractères minimum).';
       }
     });
   }
-
 }

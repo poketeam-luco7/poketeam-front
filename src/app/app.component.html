@@ -16,7 +16,7 @@
           <img [src]="photoProfil" alt="Profil" class="rounded-circle"
             style="width: 40px; height: 40px; object-fit: cover;">
         </a>
-        <button type="button" class="btn btn-danger" (click)="logout()">Se déconnecter</button>
+        <button type="button" class="btn btn-danger ms-2" (click)="logout()">Se déconnecter</button>
       </div>
     </div>
   </div>
@@ -45,6 +45,8 @@
               required />
           </div>
 
+
+          <div *ngIf="loginError" class="alert alert-danger py-2">{{ loginError }}</div>
 
           <button type="submit" class="btn btn-primary w-100">Se connecter</button>
 

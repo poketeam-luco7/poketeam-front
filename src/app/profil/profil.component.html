@@ -1,7 +1,7 @@
 
 <div class="d-flex justify-content-center align-items-center flex-column" style="min-height: 100vh;">
     <h1 class="mb-4">Profil</h1>
-    <form style="width: 66%; border: 3px solid #0d6efd; border-radius: 10px; padding: 2rem;" (submit)="modifierProfil()">
+    <form style="width: 66%; border: 3px solid #0d6efd; border-radius: 10px; padding: 2rem;" (ngSubmit)="modifierProfil()">
 
         <div class="profile-pic-wrapper d-flex justify-content-center mb-4">
             <div class="profile-pic-container position-relative" (click)="openModal()">
@@ -17,18 +17,18 @@
 
       <div class="mb-3">
         <label for="exampleInputEmail1" class="form-label">Adresse Email</label>
-        <input type="email" class="form-control" id="exampleInputEmail1" aria-describedby="emailHelp" value="{{profil.mail}}"  [(ngModel)]="registerData.mail" required>
+        <input type="email" class="form-control" id="exampleInputEmail1" name="mail" [(ngModel)]="registerData.mail" required>
       </div>
       
       <div class="mb-3">
         <div class="d-flex gap-3">
           <div class="flex-fill">
             <label for="inputNom" class="form-label">Nom</label>
-            <input type="text" class="form-control" id="inputNom" value="{{profil.nom}}"  [(ngModel)]="registerData.nom" required>
+            <input type="text" class="form-control" id="inputNom" name="nom" [(ngModel)]="registerData.nom" required>
           </div>
           <div class="flex-fill">
             <label for="inputPrenom" class="form-label">Prénom</label>
-            <input type="text" class="form-control" id="inputPrenom" value="{{profil.prenom}}"  [(ngModel)]="registerData.prenom" required>
+            <input type="text" class="form-control" id="inputPrenom" name="prenom" [(ngModel)]="registerData.prenom" required>
           </div>
         </div>
       </div>
@@ -36,10 +36,13 @@
       
       <div class="mb-3">
         <label for="exampleInputPassword1" class="form-label">Mot de Passe</label>
-        <input type="password" class="form-control" id="exampleInputPassword1"  [(ngModel)]="registerData.mdp" >
+        <input type="password" class="form-control" id="exampleInputPassword1" name="mdp" [(ngModel)]="registerData.mdp"
+          placeholder="Laisser vide pour ne pas le changer">
       </div>
     
       
+      <div *ngIf="message" class="alert alert-success py-2">{{ message }}</div>
+      <div *ngIf="erreur" class="alert alert-danger py-2">{{ erreur }}</div>
       <button type="submit" class="btn btn-primary">Modifier le profil</button>
     </form>
   </div>

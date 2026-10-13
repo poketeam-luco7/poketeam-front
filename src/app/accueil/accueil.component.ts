@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
-import { HttpClient } from '@angular/common/http'; // <-- Ajoute l'import HTTP
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { API_URL } from '../api.config';
 
 @Component({
   selector: 'app-accueil',
@@ -43,15 +44,20 @@ export class AccueilComponent {
 
   constructor(private http: HttpClient) {}
 
-  register() {
-    console.log('Données à envoyer :', this.registerData);
+  message = '';
+  erreur = '';
 
-    this.http.post('http://localhost:3000/users', this.registerData).subscribe({
-      next: (response) => {
-        console.log('Inscription réussie', response);
+  register() {
+    this.message = '';
+    this.erreur = '';
+    this.http.post(`${API_URL}/users`, this.registerData).subscribe({
+      next: () => {
+        this.message = 'Compte créé ! Tu peux maintenant te connecter.';
       },
-      error: (error) => {
-        console.error('Erreur lors de l\'inscription', error);
+      error: (err: HttpErrorResponse) => {
+        this.erreur = err.status === 409
+          ? 'Cette adresse mail est déjà utilisée.'
+          : 'Vérifie les champs : adresse mail valide et mot de passe de 6 caractères minimum.';
       }
     });
   }

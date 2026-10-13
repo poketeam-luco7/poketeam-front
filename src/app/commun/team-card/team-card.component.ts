@@ -1,6 +1,6 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
-
+import { HttpClient } from '@angular/common/http';
+import { API_URL } from '../../api.config';
 
 @Component({
   selector: 'app-team-card',
@@ -9,50 +9,20 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
   styleUrls: ['./team-card.component.css']
 })
 export class TeamCardComponent {
-  @Input() team: any; // on reçoit une team en entrée
-  @Input() pokeResultArray: any;
-  @Output() addPokemonToTeam = new EventEmitter<any>(); // <== NOUVEAU
+  @Input() team: any; // équipe renvoyée par le service Équipes (avec ses members)
+  @Output() deleted = new EventEmitter<string>();
 
-  httpHeaders: HttpHeaders = new HttpHeaders().append('Content-Type', 'application/json').append('Authorization', 'Bearer' + ' ' + localStorage.getItem('accessToken'));
+  constructor(private http: HttpClient) {}
 
+  // Plus besoin de 6 appels HTTP par carte : les membres (nom, sprite, types)
+  // sont déjà dans l'équipe grâce aux instantanés, et dans le bon ordre.
 
-  constructor(private http: HttpClient){}
-
-
-
-  ngOnInit(){
-    let pokeIdArray = [this.team.poke1, this.team.poke2, this.team.poke3, this.team.poke4, this.team.poke5, this.team.poke6];
-    this.pokeResultArray = new Array();
-
-    pokeIdArray.forEach(element => {
-
-
-      this.http.get('http://localhost:3000/pokeapi/poke/' + element, {headers : this.httpHeaders} ).subscribe({
-        next: (response) => {
-          this.pokeResultArray.push(response);
-        }
-      });
-
-
+  supprimerTeam(id: string) {
+    if (!confirm(`Supprimer l'équipe « ${this.team.nom} » ?`)) return;
+    // Correctif : token envoyé (intercepteur) et mise à jour APRÈS la réponse du serveur
+    this.http.delete(`${API_URL}/teams/${id}`).subscribe({
+      next: () => this.deleted.emit(id),
+      error: () => alert("La suppression a échoué.")
     });
-
-    console.log(this.pokeResultArray);
-  }
-
-  onAddPokemon() {
-    this.addPokemonToTeam.emit(this.team); // On envoie l'équipe
-  }
-
-  supprimerTeam(id: number){
-
-    this.http.delete('http://localhost:3000/teams/' + id).subscribe({
-      next: (response) => {
-        console.log(response);
-      }
-  })
-
-  location.reload();
   }
 }
-
-
