@@ -6,9 +6,12 @@
     <div class="d-flex gap-2 align-items-center flex-wrap">
       <div *ngFor="let pokemon of team.members"
         class="text-center justify-content-center d-flex flex-column align-items-center">
-        <img [src]="pokemon.sprite" [alt]="pokemon.name" class="rounded-circle border"
-          style="width: 50px; height: 50px;">
-        <small class="text-capitalize">{{ pokemon.name }}</small>
+        <div class="position-relative">
+          <img [src]="pokemon.sprite" [alt]="pokemon.name" class="rounded-circle border"
+            style="width: 50px; height: 50px;">
+          <span *ngIf="pokemon.isMega" class="badge badge-mega position-absolute top-0 start-50 translate-middle-x">M</span>
+        </div>
+        <small>{{ pokemon.name | nomPokemon }}</small>
       </div>
     </div>
 

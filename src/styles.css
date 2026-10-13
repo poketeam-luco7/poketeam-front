@@ -19,3 +19,29 @@
 .bg-dark { background-color: #705746; color: white; }
 .bg-steel { background-color: #B7B7CE; color: black; }
 .bg-fairy { background-color: #D685AD; color: white; }
+
+/* Méga-Évolutions */
+.badge-mega {
+  background: linear-gradient(135deg, #7b2ff7, #f107a3);
+  color: white;
+  font-size: 0.65rem;
+  letter-spacing: 0.05em;
+  z-index: 2;
+}
+
+.btn-mega-onglet {
+  border: 1px solid #7b2ff7;
+  color: #7b2ff7;
+}
+
+.btn-mega-onglet:hover,
+.btn-mega-onglet.active {
+  background: linear-gradient(135deg, #7b2ff7, #f107a3);
+  border-color: transparent;
+  color: white;
+}
+
+.dropdown-types {
+  max-height: 60vh;
+  overflow-y: auto;
+}

@@ -1,8 +1,13 @@
 import { Component } from '@angular/core';
-import { PokemonService } from '../service/pokemon/pokemon.service';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
+import { Observable, Subject, of, debounceTime, switchMap, catchError } from 'rxjs';
 import { API_URL } from '../api.config';
+import { PokemonResume, PokemonService } from '../service/pokemon/pokemon.service';
+import { TYPES, typeFr } from '../commun/pokemon-types';
+
+type Source = { kind: 'generation'; num: number } | { kind: 'mega' } | { kind: 'type'; type: string };
+
 @Component({
   selector: 'app-equipe-creat',
   standalone: false,
@@ -10,38 +15,114 @@ import { API_URL } from '../api.config';
   styleUrl: './equipe-creat.component.css'
 })
 export class EquipeCreatComponent {
-  searchText: string = '';
-  allPokemons: any[] = [];
-  pokemons: any[] = [];
-  equipe: any[] = [null, null, null, null, null, null];
-  id: number = 1;
-  types: string[] = [];
-  typeIndex: number = 0;
-  currentType: any;
-  nomEquipe: string = '';
-  enregistrement = false;
+  // Équipe en cours
+  equipe: (PokemonResume | null)[] = [null, null, null, null, null, null];
+  nomEquipe = '';
   estPublique = false;
+  enregistrement = false;
 
-  constructor(private pokemonService: PokemonService, private router: Router, private http: HttpClient) { }
+  // Liste et filtres
+  readonly generations = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+  readonly types = TYPES;
+  source: Source = { kind: 'generation', num: 1 };
+  allPokemons: PokemonResume[] = [];
+  pokemons: PokemonResume[] = [];
+  searchText = '';
+  chargement = false;
+
+  // Analyse en direct (calculée par le Pokédex)
+  analyse: any = null;
+  private equipeModifiee = new Subject<void>();
+
+  constructor(private pokemonService: PokemonService, private router: Router, private http: HttpClient) {}
 
   ngOnInit(): void {
-    this.pokemonService.getGeneration(this.id).subscribe((data: any[]) => {
-      this.allPokemons = data;
-      this.pokemons = [...this.allPokemons];
-
-    const uniqueTypes = new Set<string>();  // Utilisation d'un Set pour garantir l'unicité
-    this.allPokemons.forEach((poke: any) => {
-      poke.types.forEach((type: string) => {
-        uniqueTypes.add(type);
-      });
-    });
-    
-    this.types = Array.from(uniqueTypes);  // Convertir le Set en tableau
-  });
+    this.charger();
+    // Une analyse par modification, en ignorant les réponses devenues obsolètes
+    this.equipeModifiee.pipe(
+      debounceTime(250),
+      switchMap(() => {
+        const ids = this.equipe.filter(m => m).map(m => m!.id);
+        return ids.length
+          ? this.http.post<any>(`${API_URL}/pokeapi/teams/analyze`, { pokemonIds: ids }).pipe(catchError(() => of(null)))
+          : of(null);
+      })
+    ).subscribe(a => (this.analyse = a));
   }
 
-  newTeam(): void{
-    // Correctif : le nom est maintenant lié au champ (il n'était jamais envoyé)
+  // --- Filtres ---
+  // Les onglets Génération / Méga et le filtre de type sont indépendants :
+  // choisir un type affiche ce type dans TOUTES les générations.
+
+  choisirGeneration(num: number) {
+    this.source = { kind: 'generation', num };
+    this.charger();
+  }
+
+  choisirMegas() {
+    this.source = { kind: 'mega' };
+    this.charger();
+  }
+
+  choisirType(type: string | null) {
+    this.source = type ? { kind: 'type', type } : { kind: 'generation', num: 1 };
+    this.charger();
+  }
+
+  estGenerationActive(num: number) {
+    return this.source.kind === 'generation' && this.source.num === num;
+  }
+
+  get typeActif(): string | null {
+    return this.source.kind === 'type' ? this.source.type : null;
+  }
+
+  private charger() {
+    const s = this.source;
+    const requete: Observable<PokemonResume[]> =
+      s.kind === 'generation' ? this.pokemonService.getGeneration(s.num)
+      : s.kind === 'mega' ? this.pokemonService.getMegas()
+      : this.pokemonService.getByType(s.type);
+
+    this.chargement = true;
+    requete.subscribe({
+      next: data => {
+        this.allPokemons = data;
+        this.chargement = false;
+        this.filterPokemons();
+      },
+      error: () => (this.chargement = false),
+    });
+  }
+
+  filterPokemons(): void {
+    const search = this.searchText.toLowerCase().trim();
+    this.pokemons = this.allPokemons.filter(p => p.name.toLowerCase().includes(search));
+  }
+
+  // --- Équipe ---
+
+  addToTeam(pokemon: PokemonResume) {
+    // Même règle que le service Équipes, vérifiée ici pour un retour immédiat
+    if (pokemon.isMega && this.equipe.some(m => m?.isMega)) {
+      alert('Une seule Méga-Évolution par équipe.');
+      return;
+    }
+    const firstEmptyIndex = this.equipe.findIndex(member => member === null);
+    if (firstEmptyIndex !== -1) {
+      this.equipe[firstEmptyIndex] = pokemon;
+      this.equipeModifiee.next();
+    } else {
+      alert('Équipe complète !');
+    }
+  }
+
+  retirerDeLEquipe(index: number): void {
+    this.equipe[index] = null;
+    this.equipeModifiee.next();
+  }
+
+  newTeam(): void {
     if (!this.nomEquipe.trim()) {
       alert("Donne un nom à ton équipe.");
       return;
@@ -53,7 +134,7 @@ export class EquipeCreatComponent {
 
     const data = {
       nom: this.nomEquipe.trim(),
-      typePrincipal: this.currentType || '',
+      typePrincipal: this.typeActif || '',
       isPublic: this.estPublique,
       poke1: this.equipe[0]?.id,
       poke2: this.equipe[1]?.id,
@@ -65,9 +146,7 @@ export class EquipeCreatComponent {
 
     this.enregistrement = true;
     this.http.post(`${API_URL}/teams`, data).subscribe({
-      next: () => {
-        this.router.navigate(['/liste-equipes']);
-      },
+      next: () => this.router.navigate(['/liste-equipes']),
       error: (err) => {
         this.enregistrement = false;
         alert(err.error?.error || "Erreur lors de l'enregistrement de l'équipe.");
@@ -79,101 +158,32 @@ export class EquipeCreatComponent {
     this.router.navigate(['/liste-equipes']);
   }
 
-  retirerDeLEquipe(index: number): void {
-    this.equipe[index] = null;
-  }
-
-  filterByType(type: string): void {
-    // Si aucun type n'est sélectionné, on réinitialise et on montre tous les Pokémon
-    if (type === 'all') {
-      this.pokemons = [...this.allPokemons];
-    } else {
-      this.pokemons = this.allPokemons.filter(poke =>
-        poke.types.includes(type)
-      );
-    }
-  }
-
-  changeGeneration() {
-    if(this.id <9) {
-      this.id += 1;
-    } else {
-      this.id = 1;
-    }
-    this.currentType = undefined;
-
-    this.pokemonService.getGeneration(this.id).subscribe((data: any[]) => {
-      this.allPokemons = data;
-      this.pokemons = [...this.allPokemons];
-    });
-  }
-
-  filterPokemons(): void {
-  const search = this.searchText.toLowerCase();
-  
-  this.pokemons = this.allPokemons.filter(poke => {
-    const matchesName = poke.name.toLowerCase().includes(search);
-    const matchesType = this.currentType ? poke.types.includes(this.currentType) : true;
-    
-    return matchesName && matchesType;
-  });
-}
-
-  addToTeam(pokemon: any) {
-    const firstEmptyIndex = this.equipe.findIndex(member => member === null);
-  
-    if (firstEmptyIndex !== -1) {
-      this.equipe[firstEmptyIndex] = pokemon;
-    } else {
-      alert('Équipe complète !');
-    }
-  }
-
-  viewDetails(pokemon: any): void {
+  viewDetails(pokemon: PokemonResume): void {
     this.router.navigate(['/pokemon', pokemon.id]);
   }
 
-  getTypeColor(type: string | undefined): string {
-    if (!type) {
-      return 'bg-secondary'; // couleur par défaut
-    }
-  
-    switch (type.toLowerCase()) {
-      case 'normal': return 'bg-normal';
-      case 'fire': return 'bg-fire';
-      case 'water': return 'bg-water';
-      case 'electric': return 'bg-electric';
-      case 'grass': return 'bg-grass';
-      case 'ice': return 'bg-ice';
-      case 'fighting': return 'bg-fighting';
-      case 'poison': return 'bg-poison';
-      case 'ground': return 'bg-ground';
-      case 'flying': return 'bg-flying';
-      case 'psychic': return 'bg-psychic';
-      case 'bug': return 'bg-bug';
-      case 'rock': return 'bg-rock';
-      case 'ghost': return 'bg-ghost';
-      case 'dragon': return 'bg-dragon';
-      case 'dark': return 'bg-dark';
-      case 'steel': return 'bg-steel';
-      case 'fairy': return 'bg-fairy';
-      default: return 'bg-secondary';
-    }
-  }
-  
-  typeSuivant(): void {
-  this.typeIndex = (this.typeIndex + 1) % this.types.length;
-  this.currentType = this.types[this.typeIndex];
-  this.filterPokemonsByType();
+  // --- Analyse ---
+
+  get faiblesses() {
+    return (this.analyse?.coverage || []).filter((c: any) => c.net < 0).sort((a: any, b: any) => a.net - b.net);
   }
 
-  filterPokemonsByType() {
-    if (!this.currentType) {
-      this.pokemons = [...this.allPokemons]; // Aucun filtre
-    } else {
-      this.pokemons = this.allPokemons.filter(poke =>
-        poke.types.includes(this.currentType)
-      );
-    }
+  get pointsForts() {
+    return (this.analyse?.coverage || []).filter((c: any) => c.net > 0).sort((a: any, b: any) => b.net - a.net);
+  }
+
+  classeCase(net: number): string {
+    if (net <= -2) return 'case-danger';
+    if (net < 0) return 'case-faible';
+    if (net === 0) return 'case-neutre';
+    return net >= 2 ? 'case-solide' : 'case-resiste';
+  }
+
+  // --- Affichage ---
+
+  typeFr = typeFr;
+
+  getTypeColor(type: string | null | undefined): string {
+    return type ? `bg-${type}` : 'bg-secondary';
   }
 }

@@ -12,6 +12,7 @@ import { PokemonDetailComponent } from './pokemon-detail/pokemon-detail.componen
 import { ProfilComponent } from './profil/profil.component';
 import { AuthInterceptor } from './service/auth/auth.interceptor';
 import { VersusComponent } from './versus/versus.component';
+import { NomPokemonPipe } from './commun/nom-pokemon.pipe';
 
 @NgModule({
   declarations: [
@@ -23,6 +24,7 @@ import { VersusComponent } from './versus/versus.component';
     PokemonDetailComponent,
     ProfilComponent,
     VersusComponent,
+    NomPokemonPipe,
   ],
   imports: [
     BrowserModule,

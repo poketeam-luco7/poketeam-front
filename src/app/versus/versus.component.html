@@ -12,7 +12,7 @@
   <div *ngIf="mesEquipes.length > 0" class="d-flex flex-wrap justify-content-center align-items-end gap-3 mb-4">
     <div style="min-width: 240px;">
       <label for="equipeA" class="form-label">Ton équipe</label>
-      <select id="equipeA" class="form-select form-select-lg" [(ngModel)]="idA" name="idA">
+      <select id="equipeA" class="form-select form-select-lg" [(ngModel)]="idA" name="idA" [disabled]="enCours">
         <option *ngFor="let t of mesEquipes" [value]="t.idTeam">{{ t.nom }}</option>
       </select>
     </div>
@@ -21,7 +21,7 @@
 
     <div style="min-width: 240px;">
       <label for="equipeB" class="form-label">Adversaire</label>
-      <select id="equipeB" class="form-select form-select-lg" [(ngModel)]="idB" name="idB">
+      <select id="equipeB" class="form-select form-select-lg" [(ngModel)]="idB" name="idB" [disabled]="enCours">
         <option *ngFor="let t of adversaires" [value]="t.idTeam">{{ t.label }}</option>
       </select>
     </div>
@@ -34,14 +34,89 @@
   <p *ngIf="idA && idA === idB" class="text-center text-danger">Choisis deux équipes différentes.</p>
   <div *ngIf="erreur" class="alert alert-danger text-center">{{ erreur }}</div>
 
-  <!-- Résultat -->
-  <ng-container *ngIf="resultat">
-    <div class="text-center mb-4">
-      <span *ngIf="resultat.winner !== 'draw'" class="fs-3 fw-bold">
-        Victoire de {{ resultat.winner === 'A' ? resultat.teamA.name : resultat.teamB.name }} !
-      </span>
-      <span *ngIf="resultat.winner === 'draw'" class="fs-3 fw-bold">Égalité parfaite !</span>
+  <!-- ====================== L'arène de combat ====================== -->
+  <div *ngIf="resultat && phase !== 'repos'" class="arene" role="region" aria-label="Animation du combat">
+
+    <!-- Écran d'intro -->
+    <div *ngIf="phase === 'intro'" class="intro">
+      <div class="intro-moitie intro-a"><span>{{ resultat.teams.A.nom }}</span></div>
+      <div class="intro-moitie intro-b"><span>{{ resultat.teams.B.nom }}</span></div>
+      <div class="intro-vs">VS</div>
     </div>
+
+    <ng-container *ngIf="phase !== 'intro'">
+      <div class="plateforme plateforme-b"></div>
+      <div class="plateforme plateforme-a"></div>
+
+      <!-- Adversaire (en haut, vu de face) -->
+      <div class="equipe equipe-b" [class.touche]="impact === 'B'" [class.protege]="bouclier === 'B'"
+           [class.gagnant]="estGagnant('B')" [class.perdant]="estPerdant('B')">
+        <div *ngFor="let p of resultat.teams.B.members; let i = index" class="pokemon" [class.sorti]="i < envoyes">
+          <span class="pokeball"></span>
+          <img [src]="p.sprite" [alt]="nom(p)" [title]="nom(p)">
+        </div>
+      </div>
+
+      <!-- Ton équipe (en bas, vue de dos comme dans les jeux) -->
+      <div class="equipe equipe-a" [class.touche]="impact === 'A'" [class.protege]="bouclier === 'A'"
+           [class.gagnant]="estGagnant('A')" [class.perdant]="estPerdant('A')">
+        <div *ngFor="let p of resultat.teams.A.members; let i = index" class="pokemon" [class.sorti]="i < envoyes">
+          <span class="pokeball"></span>
+          <img [src]="spriteDos(p)" (error)="secours($event, p)" [alt]="nom(p)" [title]="nom(p)">
+        </div>
+      </div>
+
+      <!-- Encadrés façon jeu : nom, score, barre de PV -->
+      <div class="encadre encadre-b" [class.encadre-gagnant]="estGagnant('B')">
+        <div class="d-flex justify-content-between gap-3">
+          <strong>{{ resultat.teams.B.nom }}</strong>
+          <span class="score">{{ score.B }}</span>
+        </div>
+        <div class="pv"><span class="pv-label">PV</span>
+          <div class="pv-fond"><div class="pv-barre" [ngClass]="couleurPv(pv.B)" [style.width.%]="pv.B"></div></div>
+        </div>
+      </div>
+
+      <div class="encadre encadre-a" [class.encadre-gagnant]="estGagnant('A')">
+        <div class="d-flex justify-content-between gap-3">
+          <strong>{{ resultat.teams.A.nom }}</strong>
+          <span class="score">{{ score.A }}</span>
+        </div>
+        <div class="pv"><span class="pv-label">PV</span>
+          <div class="pv-fond"><div class="pv-barre" [ngClass]="couleurPv(pv.A)" [style.width.%]="pv.A"></div></div>
+        </div>
+      </div>
+
+      <!-- Attaque en vol (recréée à chaque attaque pour relancer l'animation) -->
+      <ng-container *ngFor="let n of [numeroAttaque]">
+        <div *ngIf="attaque" class="projectile" [ngClass]="['bg-' + attaque.type, attaque.de === 'A' ? 'tir-ab' : 'tir-ba']">
+          {{ typeFr(attaque.type) }}
+        </div>
+      </ng-container>
+
+      <!-- Victoire -->
+      <div *ngIf="phase === 'ko' || phase === 'fin'" class="banniere">
+        {{ resultat.winner === 'draw' ? 'ÉGALITÉ !' : 'VICTOIRE !' }}
+      </div>
+      <span *ngFor="let c of confettis" class="confetti" [style.left.%]="c.x" [style.background]="c.couleur"
+            [style.animation-delay.s]="c.delai" [style.width.px]="c.taille" [style.height.px]="c.taille * 0.5"></span>
+
+      <!-- Boîte de dialogue -->
+      <div class="dialogue" aria-live="polite">
+        {{ dialogue }}<span class="curseur" *ngIf="phase === 'fin'">▼</span>
+      </div>
+    </ng-container>
+
+    <button *ngIf="enCours" class="btn btn-sm btn-light passer" (click)="passer()">Passer ▶▶</button>
+  </div>
+
+  <div *ngIf="phase === 'fin'" class="text-center mt-3">
+    <button class="btn btn-outline-primary" (click)="jouer()">Rejouer l'animation</button>
+  </div>
+
+  <!-- ====================== Détail du calcul ====================== -->
+  <ng-container *ngIf="resultat && phase === 'fin'">
+    <h4 class="text-center mt-4 mb-3">Détail du calcul</h4>
 
     <div class="row g-4">
       <div class="col-12 col-lg-6" *ngFor="let c of ['A', 'B']">
@@ -59,7 +134,7 @@
               <div *ngFor="let p of s.equipe.members" class="text-center d-flex flex-column align-items-center">
                 <img [src]="p.sprite" [alt]="p.name" class="rounded-circle border bg-light"
                      style="width: 60px; height: 60px;">
-                <small class="text-capitalize">{{ p.name }}</small>
+                <small>{{ p.name | nomPokemon }}</small>
               </div>
             </div>
 
