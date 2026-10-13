@@ -4,11 +4,12 @@ import { Observable, map } from 'rxjs';
 import { API_URL } from '../../api.config';
 
 export interface PokemonResume {
-  id: number;
+  id: number | string;   // les formes par type (ex. 'arceus-fire') sont identifiées par leur nom
   name: string;
   image: string;
   types: string[];
   isMega: boolean;
+  isForm: boolean;
   baseSpecies: string;
 }
 
@@ -16,7 +17,7 @@ export interface PokemonResume {
 const versResume = (list: any[]): PokemonResume[] =>
   list.map(p => ({
     id: p.id, name: p.name, image: p.sprite, types: p.types,
-    isMega: !!p.isMega, baseSpecies: p.baseSpecies || p.name,
+    isMega: !!p.isMega, isForm: !!p.isForm, baseSpecies: p.baseSpecies || p.name,
   }));
 
 @Injectable({
@@ -32,6 +33,11 @@ export class PokemonService {
 
   getMegas(): Observable<PokemonResume[]> {
     return this.http.get<any[]>(`${API_URL}/pokeapi/megas`).pipe(map(versResume));
+  }
+
+  // Formes alternatives : Giratina-Origine, Motisma, formes régionales, Arceus par type...
+  getForms(): Observable<PokemonResume[]> {
+    return this.http.get<any[]>(`${API_URL}/pokeapi/forms`).pipe(map(versResume));
   }
 
   // Tous les Pokémon d'un type, toutes générations confondues

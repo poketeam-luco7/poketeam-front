@@ -27,6 +27,7 @@
                         <img [src]="member.image" [alt]="member.name" class="rounded-circle border"
                             style="width: 100px; height: 100px;">
                         <span *ngIf="member.isMega" class="badge badge-mega position-absolute top-0 start-50 translate-middle-x">MÉGA</span>
+                        <span *ngIf="member.isForm" class="badge badge-forme position-absolute top-0 start-50 translate-middle-x">FORME</span>
                     </div>
 
                     <img *ngIf="!member" src="img/empty.png" alt="Emplacement vide" class="rounded-circle border"
@@ -137,6 +138,8 @@
             (click)="choisirGeneration(g)">Gén. {{ g }}</button>
         <button type="button" class="btn btn-mega-onglet" [class.active]="source.kind === 'mega'"
             (click)="choisirMegas()">Méga</button>
+        <button type="button" class="btn btn-formes-onglet" [class.active]="source.kind === 'forms'"
+            (click)="choisirFormes()">Formes</button>
     </div>
 
     <p *ngIf="typeActif" class="text-center text-muted">
@@ -154,6 +157,7 @@
             <img [src]="poke.image" [alt]="poke.name" class="rounded-circle border"
                 style="width: 100px; height: 100px; object-fit: cover;">
             <span *ngIf="poke.isMega" class="badge badge-mega position-absolute top-0 start-50 translate-middle-x">MÉGA</span>
+            <span *ngIf="poke.isForm" class="badge badge-forme position-absolute top-0 start-50 translate-middle-x">FORME</span>
             <span *ngIf="dansEquipe(poke)" class="pastille-equipe" title="Dans l'équipe">✓</span>
 
 
