@@ -44,3 +44,34 @@
   .bg-steel { background-color: #B7B7CE; color: black; }
   .bg-fairy { background-color: #D685AD; color: white; }
   
+/* Analyse de l'équipe : grille des 18 types */
+.grille-types {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(78px, 1fr));
+  gap: 6px;
+}
+
+.case-type {
+  border-radius: 6px;
+  padding: 4px;
+  border: 2px solid transparent;
+  transition: transform 0.2s ease, background-color 0.3s ease;
+}
+
+.case-type .badge { font-size: 0.7rem; }
+.case-type .net { font-weight: bold; font-size: 0.95rem; }
+
+.case-danger  { background: #f8d7da; border-color: #dc3545; animation: pulse-danger 1.6s ease-in-out infinite; }
+.case-faible  { background: #fbe4e6; }
+.case-neutre  { background: #ffffff; color: #adb5bd; }
+.case-resiste { background: #e3f4ea; }
+.case-solide  { background: #d1e7dd; border-color: #198754; }
+
+@keyframes pulse-danger {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .case-danger { animation: none; }
+}
