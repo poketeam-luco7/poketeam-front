@@ -18,8 +18,10 @@ export class CaptureComponent {
   erreur = '';
   annonces: string[] = [];
 
-  // Équipe composée pour la prochaine run (figée pendant la run)
+  // Préparation d'une run : palier d'abord, puis l'équipe (figée pendant la run)
+  palier: any = null;
   selection: (number | string)[] = [];
+  static readonly ECART_MAX = 1;   // même règle que le serveur : 1 palier sous le sien, pas 2
 
   private readonly noms = new NomPokemonPipe();
   typeFr = typeFr;
@@ -53,9 +55,20 @@ export class CaptureComponent {
   /** On garde la composition précédente (sans ce qui n'est plus dans la collection),
    *  ou on propose le starter. */
   private initSelection() {
-    const ids = new Set((this.etat?.collection || []).map((c: any) => c.id));
-    this.selection = this.selection.filter(id => ids.has(id));
-    if (!this.selection.length && this.etat?.starter) this.selection = [this.etat.starter];
+    const permis = new Set((this.etat?.collection || []).filter((c: any) => !this.tropFort(c)).map((c: any) => c.id));
+    this.selection = this.selection.filter(id => permis.has(id));
+    if (!this.selection.length && permis.has(this.etat?.starter)) this.selection = [this.etat.starter];
+  }
+
+  choisirPalier(t: any) {
+    this.palier = t;
+    this.erreur = '';
+    this.initSelection();   // retire ceux qui sont trop forts pour ce palier
+  }
+
+  /** Interdit de combattre 2 paliers (ou plus) sous le sien. */
+  tropFort(p: any): boolean {
+    return !!this.palier && p.tier != null && p.tier - this.palier.index > CaptureComponent.ECART_MAX;
   }
 
   // --- Départ -----------------------------------------------------------------------
@@ -88,8 +101,9 @@ export class CaptureComponent {
     return prog.next.length > 1 ? `${prog.next.length} évolutions possibles` : this.noms.transform(prog.next[0]);
   }
 
-  basculer(id: number | string) {
-    if (this.etat.run) return;
+  basculer(p: any) {
+    if (this.etat.run || this.tropFort(p)) return;
+    const id = p.id;
     const i = this.selection.indexOf(id);
     if (i !== -1) this.selection.splice(i, 1);
     else if (this.selection.length < 6) this.selection.push(id);
@@ -97,13 +111,15 @@ export class CaptureComponent {
 
   // --- Runs ---------------------------------------------------------------------------
 
-  lancerRun(tier: number) {
+  lancerRun() {
+    if (!this.palier) return;
+    const tier = this.palier.index;
     if (!this.selection.length) {
       this.erreur = 'Choisis au moins un Pokémon pour la run.';
       return;
     }
     this.http.post<any>(`${API_URL}/capture/run`, { tier, pokemonIds: this.selection }).subscribe({
-      next: (run) => { this.etat.run = run; this.erreur = ''; },
+      next: (run) => { this.etat.run = run; this.erreur = ''; this.palier = null; },
       error: (err) => (this.erreur = err.error?.error || "La run n'a pas pu démarrer."),
     });
   }
@@ -121,6 +137,7 @@ export class CaptureComponent {
           const p = r.collection.find((c: any) => c.id === id);
           return `${p ? this.noms.transform(p.name) : 'Une évolution'} débloqué !`;
         });
+        if (r.trainingComplete) this.combat.annonces.unshift('Entraînement réussi : 3 victoires pour chaque membre !');
         this.router.navigate(['/capture/combat']);
       },
       error: (err) => (this.erreur = err.error?.error || "Le combat n'a pas pu avoir lieu."),

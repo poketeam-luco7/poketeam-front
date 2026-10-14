@@ -44,6 +44,7 @@
     <div *ngIf="etat.run" class="run p-3 mb-4 rounded">
       <div class="d-flex justify-content-between align-items-center mb-3">
         <h5 class="mb-0" *ngIf="!etat.run.reward">
+          <span *ngIf="etat.run.training" class="badge bg-info text-dark me-1">Entraînement</span>
           Palier {{ etat.run.tier * 50 }} – {{ etat.run.tier * 50 + 49 }} · Combat {{ etat.run.round }} / 3
         </h5>
         <h5 class="mb-0" *ngIf="etat.run.reward">🏆 Run réussie ! Choisis le Pokémon à capturer</h5>
@@ -70,39 +71,22 @@
         </div>
       </div>
       <p *ngIf="!etat.run.reward" class="small text-center mt-3 mb-0 opacity-75">
-        Gagne 3 combats d'affilée pour capturer un des Pokémon battus. Une défaite termine la run.
+        <ng-container *ngIf="!etat.run.training">Gagne 3 combats d'affilée pour capturer un des Pokémon battus.</ng-container>
+        <ng-container *ngIf="etat.run.training">Palier terminé : les victoires font progresser tes Pokémon, sans capture à la clé.</ng-container>
+        Une défaite termine la run.
       </p>
     </div>
 
-    <!-- ===================== Équipe ===================== -->
-    <!-- Composée avant chaque run, figée jusqu'à la capture ou la défaite -->
-    <div class="p-3 mb-4 border rounded bg-white">
-      <ng-container *ngIf="etat.run">
-        <h5 class="mb-3">Équipe de la run</h5>
-        <div class="d-flex flex-wrap gap-3">
-          <div *ngFor="let p of equipeRun" class="membre text-center">
-            <img [src]="p.sprite" [alt]="p.name" class="rounded-circle border" style="width: 72px; height: 72px;">
-            <div class="small fw-bold">{{ p.name | nomPokemon }}</div>
-            <ng-container *ngTemplateOutlet="barre; context: { $implicit: progression(p) }"></ng-container>
-          </div>
+    <!-- ===================== Équipe de la run en cours ===================== -->
+    <div *ngIf="etat.run" class="p-3 mb-4 border rounded bg-white">
+      <h5 class="mb-3">Équipe de la run</h5>
+      <div class="d-flex flex-wrap gap-3">
+        <div *ngFor="let p of equipeRun" class="membre text-center">
+          <img [src]="p.sprite" [alt]="p.name" class="rounded-circle border" style="width: 72px; height: 72px;">
+          <div class="small fw-bold">{{ p.name | nomPokemon }}</div>
+          <ng-container *ngTemplateOutlet="barre; context: { $implicit: progression(p) }"></ng-container>
         </div>
-      </ng-container>
-
-      <ng-container *ngIf="!etat.run">
-        <div class="d-flex justify-content-between align-items-baseline flex-wrap gap-2 mb-2">
-          <h5 class="mb-0">Équipe pour la prochaine run</h5>
-          <small class="text-muted">{{ selection.length }}/6 · choisis ensuite un palier</small>
-        </div>
-        <p class="small text-muted mb-2">Clique sur les Pokémon de ta collection. Chaque victoire compte pour l'évolution de chaque membre.</p>
-        <div class="d-flex flex-wrap gap-2">
-          <div *ngFor="let p of etat.collection" class="choix-membre text-center p-1 rounded"
-               [class.choisi]="selection.includes(p.id)" (click)="basculer(p.id)">
-            <img [src]="p.sprite" [alt]="p.name" style="width: 56px; height: 56px;">
-            <div class="tiny">{{ p.name | nomPokemon }}</div>
-            <ng-container *ngTemplateOutlet="barre; context: { $implicit: progression(p) }"></ng-container>
-          </div>
-        </div>
-      </ng-container>
+      </div>
     </div>
 
     <ng-template #barre let-prog>
@@ -114,22 +98,55 @@
       </ng-container>
     </ng-template>
 
-    <!-- ===================== Paliers ===================== -->
-    <h5>Paliers de stats de base</h5>
-    <div class="grille-paliers mb-4">
-      <div *ngFor="let t of etat.tiers" class="palier p-2 border rounded bg-white text-center">
-        <div class="fw-bold">{{ libellePalier(t) }}</div>
-        <div class="progress my-1" style="height: 6px;">
-          <div class="progress-bar" [style.width.%]="t.owned / t.count * 100"></div>
+    <ng-container *ngIf="!etat.run">
+      <!-- ===================== 1. Palier ===================== -->
+      <h5>1. Choisis un palier <small class="text-muted fw-normal">(stats de base)</small></h5>
+      <div class="grille-paliers mb-4">
+        <div *ngFor="let t of etat.tiers" class="palier p-2 border rounded bg-white text-center"
+             [class.palier-choisi]="palier?.index === t.index">
+          <div class="fw-bold">{{ libellePalier(t) }}</div>
+          <div class="progress my-1" style="height: 6px;">
+            <div class="progress-bar" [ngClass]="t.training ? 'bg-info' : ''" [style.width.%]="t.owned / t.count * 100"></div>
+          </div>
+          <div class="tiny text-muted mb-1" title="Pokémon du palier dont tu possèdes déjà la ligne d'évolution">
+            {{ t.owned }} / {{ t.count }} découverts
+          </div>
+          <button class="btn btn-sm w-100" [ngClass]="t.training ? 'btn-outline-info' : 'btn-outline-danger'"
+                  [class.active]="palier?.index === t.index" (click)="choisirPalier(t)">
+            {{ t.training ? 'Entraînement' : 'Capture' }}
+          </button>
         </div>
-        <div class="tiny text-muted mb-1" title="Pokémon du palier dont tu possèdes déjà la ligne d'évolution">
-          {{ t.owned }} / {{ t.count }} découverts
-        </div>
-        <button class="btn btn-sm btn-outline-danger w-100" (click)="lancerRun(t.index)" [disabled]="etat.run || !selection.length || t.owned === t.count">
-          Run
-        </button>
       </div>
-    </div>
+
+      <!-- ===================== 2. Équipe pour ce palier ===================== -->
+      <div *ngIf="palier" class="p-3 mb-4 border rounded bg-white preparation">
+        <div class="d-flex justify-content-between align-items-baseline flex-wrap gap-2 mb-2">
+          <h5 class="mb-0">2. Compose ton équipe · palier {{ libellePalier(palier) }}</h5>
+          <small class="text-muted">{{ selection.length }}/6</small>
+        </div>
+        <p class="small text-muted mb-2">
+          Un Pokémon ne peut pas combattre 2 paliers (ou plus) sous le sien.
+          Chaque victoire compte pour l'évolution de chaque membre.
+        </p>
+        <div class="d-flex flex-wrap gap-2 mb-3">
+          <div *ngFor="let p of etat.collection" class="choix-membre text-center p-1 rounded"
+               [class.choisi]="selection.includes(p.id)" [class.interdit]="tropFort(p)"
+               [title]="tropFort(p) ? 'Trop fort pour ce palier' : ''" (click)="basculer(p)">
+            <img [src]="p.sprite" [alt]="p.name" style="width: 56px; height: 56px;">
+            <div class="tiny">{{ p.name | nomPokemon }}</div>
+            <span *ngIf="tropFort(p)" class="badge bg-secondary tiny">Trop fort</span>
+            <ng-container *ngIf="!tropFort(p)">
+              <ng-container *ngTemplateOutlet="barre; context: { $implicit: progression(p) }"></ng-container>
+            </ng-container>
+          </div>
+        </div>
+        <button class="btn btn-sm me-2" [ngClass]="palier.training ? 'btn-info' : 'btn-danger'"
+                (click)="lancerRun()" [disabled]="!selection.length">
+          {{ palier.training ? "Lancer l'entraînement" : 'Lancer la run' }}
+        </button>
+        <button class="btn btn-sm btn-outline-secondary" (click)="palier = null">Annuler</button>
+      </div>
+    </ng-container>
 
     <!-- ===================== Collection ===================== -->
     <div class="d-flex justify-content-between align-items-baseline">
