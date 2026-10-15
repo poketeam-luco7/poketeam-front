@@ -125,7 +125,8 @@
           <small class="text-muted">{{ selection.length }}/6</small>
         </div>
         <p class="small text-muted mb-2">
-          Un Pokémon ne peut pas combattre 2 paliers (ou plus) sous le sien.
+          <ng-container *ngIf="palier.training">En entraînement, un Pokémon ne peut pas combattre 2 paliers (ou plus) sous le sien.</ng-container>
+          <ng-container *ngIf="!palier.training">Pour capturer, tous tes Pokémon peuvent entrer.</ng-container>
           Chaque victoire compte pour l'évolution de chaque membre.
         </p>
         <!-- Filtres de la collection -->
@@ -155,7 +156,7 @@
               <option value="asc">Stats croissantes</option>
             </select>
           </div>
-          <div class="form-check ms-1 mb-1">
+          <div *ngIf="palier.training" class="form-check ms-1 mb-1">
             <input id="masquerTropForts" type="checkbox" class="form-check-input" [(ngModel)]="masquerTropForts">
             <label for="masquerTropForts" class="form-check-label small">Masquer les trop forts</label>
           </div>

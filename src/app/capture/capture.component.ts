@@ -95,9 +95,10 @@ export class CaptureComponent {
     this.initSelection();   // retire ceux qui sont trop forts pour ce palier
   }
 
-  /** Interdit de combattre 2 paliers (ou plus) sous le sien. */
+  /** En entraînement seulement : interdit de combattre 2 paliers (ou plus) sous le sien.
+   *  Pour capturer, on entre dans le palier qu'on veut. */
   tropFort(p: any): boolean {
-    return !!this.palier && p.tier != null && p.tier - this.palier.index > CaptureComponent.ECART_MAX;
+    return !!this.palier?.training && p.tier != null && p.tier - this.palier.index > CaptureComponent.ECART_MAX;
   }
 
   // --- Départ -----------------------------------------------------------------------
