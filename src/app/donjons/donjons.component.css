@@ -1,0 +1,13 @@
+.verrou { background: linear-gradient(135deg, #2c2c3a, #14213d); color: #f7f5ef; }
+.boss-final { background: radial-gradient(circle at 15% 50%, #6f2dbd 0%, #2a0f4a 55%, #12061f 100%); color: #ffd700; border: 2px solid #ffd700; }
+.boss-final img { filter: drop-shadow(0 0 12px rgba(255, 60, 120, .7)); }
+
+.grille-donjons { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 12px; }
+.donjon { position: relative; background: #fff; border: 2px solid #dee2e6; transition: transform .15s ease; }
+.donjon:hover { transform: translateY(-3px); }
+.donjon img { filter: drop-shadow(0 4px 6px rgba(0, 0, 0, .25)); }
+.donjon-legendary { border-color: #d4a017; background: linear-gradient(180deg, #fff8e1, #fff); }
+.donjon-mythical { border-color: #c2185b; background: linear-gradient(180deg, #fde7f0, #fff); }
+.donjon-mega { border-color: #6f42c1; background: linear-gradient(180deg, #efe7fb, #fff); }
+.donjon.conquis { opacity: .75; }
+.type-donjon { position: absolute; top: 8px; left: 8px; background: #14213d; }

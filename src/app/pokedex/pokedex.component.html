@@ -37,9 +37,12 @@
       </button>
     </div>
 
-    <div class="form-check form-switch d-flex justify-content-center gap-2 mb-3">
-      <input class="form-check-input" type="checkbox" role="switch" id="seulement" [(ngModel)]="seulementCaptures">
-      <label class="form-check-label" for="seulement">Capturés uniquement</label>
+    <div class="d-flex justify-content-center mb-3">
+      <div class="btn-group" role="group" aria-label="Pokémon affichés">
+        <button type="button" class="btn btn-sm" [ngClass]="affichage === 'tous' ? 'btn-dark' : 'btn-outline-dark'" (click)="affichage = 'tous'">Tous</button>
+        <button type="button" class="btn btn-sm" [ngClass]="affichage === 'possedes' ? 'btn-success' : 'btn-outline-success'" (click)="affichage = 'possedes'">Possédés</button>
+        <button type="button" class="btn btn-sm" [ngClass]="affichage === 'manquants' ? 'btn-secondary' : 'btn-outline-secondary'" (click)="affichage = 'manquants'">Manquants</button>
+      </div>
     </div>
 
     <p *ngIf="chargement" class="text-center text-muted">Chargement...</p>
@@ -52,6 +55,6 @@
         <div class="nom">{{ capture(p) ? (p.name | nomPokemon) : '???' }}</div>
       </div>
     </div>
-    <p *ngIf="!chargement && affiches.length === 0" class="text-center text-muted">Aucun Pokémon capturé dans cet onglet.</p>
+    <p *ngIf="!chargement && affiches.length === 0" class="text-center text-muted">{{ affichage === 'manquants' ? 'Tous les Pokémon de cet onglet sont capturés !' : 'Aucun Pokémon capturé dans cet onglet.' }}</p>
   </ng-container>
 </div>

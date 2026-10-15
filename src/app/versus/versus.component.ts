@@ -34,9 +34,10 @@ export class VersusComponent implements OnDestroy {
   chargement = false;
   erreur = '';
 
-  // Mode « boss de la semaine » (route /boss)
+  // Mode « boss final » (route /boss) : Éthernatos Infinimax
   modeBoss = false;
   modeCapture = false;   // combat contre un Pokémon sauvage (route /capture/combat)
+  modeDonjon = false;    // combat de donjon (route /donjons/combat), déjà calculé par Équipes
   boss: any = null;
 
   // Mise en scène
@@ -62,15 +63,17 @@ export class VersusComponent implements OnDestroy {
   ngOnInit() {
     this.modeBoss = !!this.route.snapshot.data['boss'];
     this.modeCapture = !!this.route.snapshot.data['capture'];
-    if (this.modeCapture) {
+    this.modeDonjon = !!this.route.snapshot.data['donjon'];
+    if (this.modeCapture || this.modeDonjon) {
       // Le combat a déjà été calculé par Équipes : on ne fait que le mettre en scène
       const r = this.combatCapture.dernier?.combat;
       if (!r) {
-        this.router.navigate(['/capture']);
+        this.router.navigate([this.modeDonjon ? '/donjons' : '/capture']);
         return;
       }
       this.combatCapture.dernier = null;
-      r.teams.B.nom = `${this.noms.transform(r.teams.B.nom)} sauvage`;
+      r.teams.B.nom = this.modeDonjon ? this.noms.transform(r.teams.B.nom)
+                                      : `${this.noms.transform(r.teams.B.nom)} sauvage`;
       r.teamB.name = r.teams.B.nom;
       r.teamA.name = r.teams.A.nom;
       this.resultat = r;
@@ -85,9 +88,11 @@ export class VersusComponent implements OnDestroy {
         next: ({ miennes, boss }) => {
           this.mesEquipes = miennes;
           this.boss = boss;
-          this.idA = this.route.snapshot.queryParamMap.get('a') || this.premiereJouable(miennes);
+          this.idA = this.route.snapshot.queryParamMap.get('a')
+            || miennes.find(t => !t.locked?.length && this.assezForte(t))?.idTeam
+            || this.premiereJouable(miennes);
         },
-        error: () => (this.erreur = "Le boss de la semaine n'a pas pu être chargé."),
+        error: () => (this.erreur = "Le boss final n'a pas pu être chargé."),
       });
       return;
     }
@@ -119,7 +124,17 @@ export class VersusComponent implements OnDestroy {
 
   peutLancer(): boolean {
     if (this.chargement || this.enCours || !this.idA) return false;
-    return this.modeBoss ? !!this.boss : !!this.idB && this.idA !== this.idB;
+    return this.modeBoss ? !!this.boss && this.assezForte(this.equipeA)
+                         : !!this.idB && this.idA !== this.idB;
+  }
+
+  get equipeA(): any {
+    return this.mesEquipes.find(t => t.idTeam === this.idA);
+  }
+
+  /** Boss final : il faut 3 fois ses stats de base pour l'affronter (vérifié aussi par le serveur). */
+  assezForte(t: any): boolean {
+    return !!t && (!this.boss?.requirement || t.summary?.statTotal >= this.boss.requirement);
   }
 
   get enCours(): boolean {
@@ -350,14 +365,8 @@ export class VersusComponent implements OnDestroy {
     return 'VICTOIRE !';
   }
 
-  /** Fin du changement de boss, en jours. */
-  get joursRestants(): number {
-    if (!this.boss) return 0;
-    return Math.max(1, Math.ceil((new Date(this.boss.endsAt).getTime() - Date.now()) / 86400000));
-  }
-
   retourCapture() {
-    this.router.navigate(['/capture']);
+    this.router.navigate([this.modeDonjon ? '/donjons' : '/capture']);
   }
 
   couleurPv(pv: number): string {

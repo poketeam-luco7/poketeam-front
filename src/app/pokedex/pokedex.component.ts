@@ -17,7 +17,7 @@ export class PokedexComponent {
   onglet: number | 'mega' = 1;
   pokemons: PokemonResume[] = [];
   chargement = false;
-  seulementCaptures = false;
+  affichage: 'tous' | 'possedes' | 'manquants' = 'tous';
 
   private especes = new Set<string>();
   private megas = new Set<number>();
@@ -65,7 +65,9 @@ export class PokedexComponent {
   }
 
   get affiches(): PokemonResume[] {
-    return this.seulementCaptures ? this.pokemons.filter(p => this.capture(p)) : this.pokemons;
+    if (this.affichage === 'possedes') return this.pokemons.filter(p => this.capture(p));
+    if (this.affichage === 'manquants') return this.pokemons.filter(p => !this.capture(p));
+    return this.pokemons;
   }
 
   numero(p: PokemonResume): string {

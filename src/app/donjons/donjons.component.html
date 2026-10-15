@@ -1,0 +1,86 @@
+<div class="m-5 p-3 border rounded bg-light">
+  <div class="d-flex justify-content-between align-items-center m-3">
+    <h2 class="mb-0">Donjons</h2>
+    <button class="btn btn-primary" [routerLink]="['/liste-equipes']">Retour</button>
+  </div>
+
+  <div *ngIf="chargement" class="text-center text-muted">Chargement...</div>
+  <div *ngIf="erreur" class="alert alert-danger text-center">{{ erreur }}</div>
+  <div *ngFor="let a of annonces" class="alert alert-success text-center fw-bold">🎉 {{ a }}</div>
+
+  <ng-container *ngIf="etat">
+    <!-- Mode pas encore commencé ou pas encore ouvert -->
+    <div *ngIf="!etat.started" class="alert alert-info text-center">
+      Les légendaires, les fabuleux et les Méga se gagnent ici. Commence par le
+      <a routerLink="/capture">mode Capture</a>.
+    </div>
+    <div *ngIf="etat.started && !etat.open" class="verrou p-4 mb-4 rounded text-center">
+      <div class="display-6 mb-2">🔒</div>
+      <h4>Capture {{ etat.required }} Pokémon pour ouvrir les donjons</h4>
+      <div class="progress mx-auto my-3" style="height: 12px; max-width: 420px;">
+        <div class="progress-bar bg-warning" [style.width.%]="etat.captured / etat.required * 100"></div>
+      </div>
+      <p class="mb-3">{{ etat.captured }} / {{ etat.required }} capturés</p>
+      <a routerLink="/capture" class="btn btn-success">Continuer en mode Capture</a>
+    </div>
+
+    <!-- Boss final -->
+    <div class="boss-final p-3 mb-4 rounded d-flex flex-wrap align-items-center gap-3">
+      <img [src]="etat.ultimate.sprite" [alt]="etat.ultimate.name" style="width: 96px; height: 96px;">
+      <div class="flex-grow-1">
+        <div class="small text-uppercase opacity-75">Boss final</div>
+        <h4 class="mb-1">Éthernatos Infinimax</h4>
+        <div class="small">{{ etat.ultimate.statTotal }} de stats, × 4 en combat · équipe requise : <strong>{{ etat.ultimate.requirement }}</strong></div>
+      </div>
+      <span *ngIf="etat.ultimateDefeated" class="badge bg-warning text-dark fs-6">🏆 Vaincu avec {{ etat.ultimateDefeated.team }}</span>
+      <a routerLink="/boss" class="btn btn-warning fw-bold">Défier</a>
+    </div>
+
+    <ng-container *ngIf="etat.open">
+      <!-- Équipe -->
+      <div class="d-flex flex-wrap align-items-end gap-3 mb-3">
+        <div style="min-width: 260px;">
+          <label for="equipeDonjon" class="form-label small mb-1">Ton équipe</label>
+          <select id="equipeDonjon" class="form-select" [(ngModel)]="idEquipe" name="equipeDonjon">
+            <option *ngFor="let t of equipes" [value]="t.idTeam">{{ t.nom }} · {{ t.summary.statTotal }}</option>
+          </select>
+        </div>
+        <div class="pb-2">Puissance : <strong class="fs-5">{{ puissance }}</strong></div>
+        <div class="ms-auto pb-2 text-muted">{{ conquis }} / {{ etat.dungeons.length }} conquis</div>
+      </div>
+      <p *ngIf="equipes.length === 0" class="text-muted">Crée une équipe (sans Pokémon verrouillé) pour entrer dans un donjon.</p>
+
+      <!-- Filtres -->
+      <div class="d-flex flex-wrap gap-2 mb-3">
+        <button *ngFor="let f of filtres" class="btn btn-sm"
+                [ngClass]="filtre === f.id ? 'btn-dark' : 'btn-outline-dark'" (click)="filtre = f.id">{{ f.libelle }}</button>
+      </div>
+
+      <div class="grille-donjons">
+        <div *ngFor="let d of donjons" class="donjon p-3 rounded text-center" [ngClass]="'donjon-' + d.kind"
+             [class.conquis]="d.conquered">
+          <span class="badge type-donjon">{{ libellesType[d.kind] }}</span>
+          <span *ngIf="d.conquered" class="badge bg-success position-absolute top-0 end-0 m-2">✓ Conquis</span>
+          <img [src]="d.sprite" [alt]="d.name" style="width: 96px; height: 96px;">
+          <div class="fw-bold">{{ d.name | nomPokemon }}</div>
+          <div class="d-flex justify-content-center gap-1 my-1">
+            <span *ngFor="let t of d.types" class="badge" [ngClass]="'bg-' + t">{{ typeFr(t) }}</span>
+          </div>
+          <div class="small">Stats : <strong>{{ d.statTotal }}</strong> · × 4 en combat</div>
+          <div class="small" [class.text-danger]="puissance < d.requirement">Équipe requise : <strong>{{ d.requirement }}</strong></div>
+          <div *ngIf="d.reward.id !== d.id" class="small text-muted">Récompense : {{ d.reward.name | nomPokemon }}</div>
+          <button class="btn btn-sm w-100 mt-2" [ngClass]="d.conquered ? 'btn-outline-secondary' : 'btn-danger'"
+                  [disabled]="!accessible(d)" (click)="entrer(d)"
+                  [title]="puissance < d.requirement ? 'Ton équipe est trop faible pour ce donjon' : ''">
+            {{ d.conquered ? 'Rejouer' : 'Entrer' }}
+          </button>
+        </div>
+      </div>
+      <p *ngIf="donjons.length === 0" class="text-center text-muted">Aucun donjon dans cette catégorie.</p>
+      <p class="small text-muted mt-3 mb-0">
+        Le donjon d'une Méga apparaît quand tu possèdes l'espèce qui méga-évolue.
+        Pour une ligne d'évolution, la victoire donne le premier stade.
+      </p>
+    </ng-container>
+  </ng-container>
+</div>

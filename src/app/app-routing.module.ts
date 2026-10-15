@@ -9,6 +9,7 @@ import { authGuard } from './service/auth/auth.guard';
 import { VersusComponent } from './versus/versus.component';
 import { CaptureComponent } from './capture/capture.component';
 import { PokedexComponent } from './pokedex/pokedex.component';
+import { DonjonsComponent } from './donjons/donjons.component';
 
 const routes: Routes = [
   {path:'',redirectTo:'accueil',pathMatch:'full'},
@@ -21,6 +22,8 @@ const routes: Routes = [
   {path:'boss', component: VersusComponent, canActivate: [authGuard], data: { boss: true }},
   {path:'capture', component: CaptureComponent, canActivate: [authGuard]},
   {path:'pokedex', component: PokedexComponent, canActivate: [authGuard]},
+  {path:'donjons', component: DonjonsComponent, canActivate: [authGuard]},
+  {path:'donjons/combat', component: VersusComponent, canActivate: [authGuard], data: { donjon: true }},
   {path:'capture/combat', component: VersusComponent, canActivate: [authGuard], data: { capture: true }}
 ];
 
