@@ -69,6 +69,7 @@
           <div class="small">Stats : <strong>{{ d.statTotal }}</strong> · × 4 en combat</div>
           <div class="small" [class.text-danger]="puissance < d.requirement">Équipe requise : <strong>{{ d.requirement }}</strong></div>
           <div *ngIf="d.reward.id !== d.id" class="small text-muted">Récompense : {{ d.reward.name | nomPokemon }}</div>
+          <div *ngIf="partenaires(d).length" class="small text-muted">Fusion avec {{ partenaires(d).join(' et ') }}</div>
           <button class="btn btn-sm w-100 mt-2" [ngClass]="d.conquered ? 'btn-outline-secondary' : 'btn-danger'"
                   [disabled]="!accessible(d)" (click)="entrer(d)"
                   [title]="puissance < d.requirement ? 'Ton équipe est trop faible pour ce donjon' : ''">
@@ -78,7 +79,7 @@
       </div>
       <p *ngIf="donjons.length === 0" class="text-center text-muted">Aucun donjon dans cette catégorie.</p>
       <p class="small text-muted mt-3 mb-0">
-        Le donjon d'une Méga apparaît quand tu possèdes l'espèce qui méga-évolue.
+        Le donjon d'une Méga ou d'une forme apparaît quand tu possèdes l'espèce (et, pour une fusion, ses partenaires).
         Pour une ligne d'évolution, la victoire donne le premier stade.
       </p>
     </ng-container>

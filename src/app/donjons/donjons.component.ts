@@ -7,7 +7,7 @@ import { typeFr } from '../commun/pokemon-types';
 import { NomPokemonPipe } from '../commun/nom-pokemon.pipe';
 import { CombatCaptureService } from '../service/capture/combat-capture.service';
 
-type Filtre = 'tous' | 'a-conquerir' | 'legendary' | 'mythical' | 'mega';
+type Filtre = 'tous' | 'a-conquerir' | 'legendary' | 'mythical' | 'mega' | 'form';
 
 /** Donjons : un par légendaire, fabuleux et Méga. On y entre avec une équipe enregistrée. */
 @Component({
@@ -32,8 +32,9 @@ export class DonjonsComponent {
     { id: 'legendary', libelle: 'Légendaires' },
     { id: 'mythical', libelle: 'Fabuleux' },
     { id: 'mega', libelle: 'Méga' },
+    { id: 'form', libelle: 'Formes' },
   ];
-  readonly libellesType: Record<string, string> = { legendary: 'Légendaire', mythical: 'Fabuleux', mega: 'Méga' };
+  readonly libellesType: Record<string, string> = { legendary: 'Légendaire', mythical: 'Fabuleux', mega: 'Méga', form: 'Forme' };
   private readonly noms = new NomPokemonPipe();
   typeFr = typeFr;
 
@@ -78,6 +79,11 @@ export class DonjonsComponent {
 
   get conquis(): number {
     return (this.etat?.dungeons || []).filter((d: any) => d.conquered).length;
+  }
+
+  /** Fusion : les partenaires à posséder en plus de l'espèce (Kyurem Noir : Zekrom). */
+  partenaires(d: any): string[] {
+    return (d.needsAll || []).slice(1).map((n: any) => this.noms.transform(n.name));
   }
 
   accessible(d: any): boolean {

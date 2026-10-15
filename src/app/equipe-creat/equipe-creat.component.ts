@@ -32,7 +32,8 @@ export class EquipeCreatComponent implements OnDestroy {
   chargement = false;
 
   // Pokémon débloqués en mode Capture : seuls ceux-ci peuvent entrer dans une équipe
-  capture: { started: boolean; especes: Set<string>; megas: Set<number>; pokedex: any } | null = null;
+  capture: { started: boolean; especes: Set<string>; megas: Set<number>; formes: Set<number>;
+             formesAMeriter: Set<number>; pokedex: any } | null = null;
 
   // Analyse en direct (calculée par le Pokédex)
   analyse: any = null;
@@ -57,6 +58,8 @@ export class EquipeCreatComponent implements OnDestroy {
         started: c.started,
         especes: new Set(c.unlockedSpecies || []),
         megas: new Set(c.unlockedMegas || []),
+        formes: new Set(c.unlockedForms || []),
+        formesAMeriter: new Set(c.improvedForms || []),
         pokedex: c.pokedex,
       };
     });
@@ -136,10 +139,13 @@ export class EquipeCreatComponent implements OnDestroy {
 
   // --- Équipe ---
 
-  /** Pas encore capturé : une forme suit son espèce, une Méga se débloque elle-même. */
+  /** Pas encore capturé : une forme équivalente suit son espèce ; une Méga ou une forme
+   *  améliorée (Superdofin Héros, Kyurem Noir...) se débloque elle-même. */
   verrouille(p: PokemonResume): boolean {
     if (!this.capture) return false;
-    return p.isMega ? !this.capture.megas.has(Number(p.id)) : !this.capture.especes.has(p.baseSpecies);
+    if (p.isMega) return !this.capture.megas.has(Number(p.id));
+    if (this.capture.formesAMeriter.has(Number(p.id))) return !this.capture.formes.has(Number(p.id));
+    return !this.capture.especes.has(p.baseSpecies);
   }
 
   /** Ce Pokémon précis est-il déjà dans l'équipe ? */

@@ -127,7 +127,9 @@ export class CaptureComponent {
   }
 
   prochain(prog: any): string {
-    if (prog.next[0] === 'mega') return 'Méga-Évolution';
+    if (prog.kind === 'form') {
+      return prog.next.length > 1 ? `${prog.next.length} formes` : this.noms.transform(prog.next[0]);
+    }
     return prog.next.length > 1 ? `${prog.next.length} évolutions possibles` : this.noms.transform(prog.next[0]);
   }
 

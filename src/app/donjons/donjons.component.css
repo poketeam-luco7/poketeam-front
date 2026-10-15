@@ -9,5 +9,6 @@
 .donjon-legendary { border-color: #d4a017; background: linear-gradient(180deg, #fff8e1, #fff); }
 .donjon-mythical { border-color: #c2185b; background: linear-gradient(180deg, #fde7f0, #fff); }
 .donjon-mega { border-color: #6f42c1; background: linear-gradient(180deg, #efe7fb, #fff); }
+.donjon-form { border-color: #0d6efd; background: linear-gradient(180deg, #e7f0ff, #fff); }
 .donjon.conquis { opacity: .75; }
 .type-donjon { position: absolute; top: 8px; left: 8px; background: #14213d; }

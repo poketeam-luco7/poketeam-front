@@ -169,6 +169,7 @@
                [title]="tropFort(p) ? 'Trop fort pour ce palier' : ''" (click)="basculer(p)">
             <img [src]="p.sprite" [alt]="p.name" style="width: 56px; height: 56px;">
             <div class="tiny fw-semibold">{{ p.name | nomPokemon }}</div>
+            <span *ngIf="p.isForm" class="badge badge-forme type-mini">FORME</span>
             <div class="d-flex justify-content-center flex-wrap gap-1 my-1">
               <span *ngFor="let t of p.types" class="badge type-mini" [ngClass]="'bg-' + t">{{ typeFr(t) }}</span>
             </div>
